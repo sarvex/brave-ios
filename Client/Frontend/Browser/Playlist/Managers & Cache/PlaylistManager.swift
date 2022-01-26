@@ -14,21 +14,12 @@ import BraveShared
 
 private let log = Logger.browserLogger
 
-protocol PlaylistManagerDelegate: AnyObject {
-    func onDownloadProgressUpdate(id: String, percentComplete: Double)
-    func onDownloadStateChanged(id: String, state: PlaylistDownloadManager.DownloadState, displayName: String?, error: Error?)
-    
-    func controllerDidChange(_ anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?)
-    func controllerDidChangeContent()
-    func controllerWillChangeContent()
-}
-
 class PlaylistManager: NSObject {
     static let shared = PlaylistManager()
     
     private var assetInformation = [PlaylistAssetFetcher]()
     private let downloadManager = PlaylistDownloadManager()
-    private let frc = PlaylistItem.frc()
+    private var frc = PlaylistItem.frc()
     private var didRestoreSession = false
     
     // Observers
@@ -45,6 +36,7 @@ class PlaylistManager: NSObject {
                                                              state: PlaylistDownloadManager.DownloadState,
                                                              displayName: String?,
                                                              error: Error?), Never>()
+    private let onCurrentFolderChanged = PassthroughSubject<(), Never>()
     
     private override init() {
         super.init()
@@ -54,6 +46,17 @@ class PlaylistManager: NSObject {
         
         // Delete system cache always on startup.
         deleteUserManagedAssets()
+    }
+    
+    var currentFolder: PlaylistFolder? {
+        didSet {
+            frc.delegate = nil
+            frc = PlaylistItem.frc(parentFolder: currentFolder)
+            frc.delegate = self
+            reloadData()
+            
+            onCurrentFolderChanged.send()
+        }
     }
     
     var contentWillChange: AnyPublisher<Void, Never> {
@@ -76,12 +79,20 @@ class PlaylistManager: NSObject {
         onDownloadStateChanged.eraseToAnyPublisher()
     }
     
+    var onCurrentFolderDidChange: AnyPublisher<(), Never> {
+        onCurrentFolderChanged.eraseToAnyPublisher()
+    }
+    
     var allItems: [PlaylistInfo] {
         frc.fetchedObjects?.map({ PlaylistInfo(item: $0) }) ?? []
     }
     
     var numberOfAssets: Int {
         frc.fetchedObjects?.count ?? 0
+    }
+    
+    var fetchedObjects: [PlaylistItem] {
+        frc.fetchedObjects ?? []
     }
     
     func itemAtIndex(_ index: Int) -> PlaylistInfo? {

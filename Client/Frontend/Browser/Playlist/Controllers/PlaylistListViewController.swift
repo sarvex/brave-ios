@@ -16,6 +16,7 @@ import SDWebImage
 import BraveShared
 import Shared
 import Data
+import SwiftUI
 
 private let log = Logger.browserLogger
 
@@ -36,8 +37,8 @@ class PlaylistListViewController: UIViewController {
     
     weak var delegate: PlaylistViewControllerDelegate?
     private let playerView: VideoView
-    private let contentManager = MPPlayableContentManager.shared()
     private var observers = Set<AnyCancellable>()
+    private var folderObserver: AnyCancellable?
     private(set) var autoPlayEnabled = Preferences.Playlist.firstLoadAutoPlay.value
     var playerController: AVPlayerViewController?
     
@@ -53,6 +54,8 @@ class PlaylistListViewController: UIViewController {
         $0.separatorColor = .clear
         $0.allowsSelectionDuringEditing = true
     }
+    
+    private let toolbar = UIToolbar()
     
     init(playerView: VideoView) {
         self.playerView = playerView
@@ -120,12 +123,44 @@ class PlaylistListViewController: UIViewController {
             $0.dragDelegate = self
             $0.dropDelegate = self
             $0.dragInteractionEnabled = true
+            $0.allowsMultipleSelectionDuringEditing = true
         }
-
+        
+        toolbar.do {
+            $0.items = [
+                UIBarButtonItem(title: "Edit", style: .done, target: self, action: #selector(onEditItems(_:))),
+                UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+            ]
+        }
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        title = PlaylistManager.shared.currentFolder?.title
+        
         // Update
         DispatchQueue.main.async {
             self.fetchResults()
         }
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        folderObserver = PlaylistManager.shared.onCurrentFolderDidChange
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in
+                guard let self = self else { return }
+                self.title = PlaylistManager.shared.currentFolder?.title
+                self.tableView.reloadData()
+        }
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        folderObserver = nil
     }
     
     // MARK: Internal
@@ -134,6 +169,11 @@ class PlaylistListViewController: UIViewController {
         updateTableBackgroundView()
         playerView.setControlsEnabled(false)
         
+        if let initialItem = initialItem,
+            let item = PlaylistItem.getItem(pageSrc: initialItem.pageSrc) {
+            PlaylistManager.shared.currentFolder = item.playlistFolder
+        }
+        
         let initialItem = self.initialItem
         let initialItemOffset = self.initialItemPlaybackOffset
         self.initialItem = nil
@@ -141,7 +181,6 @@ class PlaylistListViewController: UIViewController {
         
         PlaylistManager.shared.reloadData()
         tableView.reloadData()
-        contentManager.reloadData()
         
         // After reloading all data, update the background
         guard PlaylistManager.shared.numberOfAssets > 0 else {
@@ -253,6 +292,73 @@ class PlaylistListViewController: UIViewController {
         dismiss(animated: true, completion: nil)
     }
     
+    @objc
+    private func onEditItems(_ button: UIBarButtonItem) {
+        tableView.setEditing(true, animated: true)
+        toolbar.do {
+            $0.items = [
+                UIBarButtonItem(title: "Cancel", style: .done, target: self, action: #selector(onCancelEditingItems(_:))),
+                UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
+                UIBarButtonItem(title: "Move", style: .done, target: self, action: #selector(onMoveEditingItems(_:))),
+                UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
+                UIBarButtonItem(title: "Delete", style: .done, target: self, action: #selector(onDeleteEditingItems(_:)))
+            ]
+        }
+    }
+    
+    @objc
+    private func onCancelEditingItems(_ button: UIBarButtonItem) {
+        tableView.setEditing(false, animated: true)
+        toolbar.do {
+            $0.items = [
+                UIBarButtonItem(title: "Edit", style: .done, target: self, action: #selector(onEditItems(_:))),
+                UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+            ]
+        }
+    }
+    
+    @objc
+    private func onMoveEditingItems(_ button: UIBarButtonItem) {
+        let selection = tableView.indexPathsForSelectedRows ?? []
+        onCancelEditingItems(button)
+        
+        let items = selection.compactMap({
+            PlaylistManager.shared.fetchedObjects[safe: $0.row]
+        })
+        
+        var moveController = PlaylistMoveFolderView(selectedItems: items)
+        moveController.onCancelButtonPressed = { [weak self] in
+            self?.presentedViewController?.dismiss(animated: true, completion: nil)
+        }
+        
+        moveController.onDoneButtonPressed = { [weak self] items, folder in
+            guard let self = self else { return }
+            self.presentedViewController?.dismiss(animated: true, completion: nil)
+            
+            PlaylistItem.moveItems(items: items.map({ $0.objectID }), to: folder?.uuid)
+        }
+        
+        let hostingController = UIHostingController(rootView: moveController.environment(\.managedObjectContext, DataController.swiftUIContext))
+        
+        present(hostingController, animated: true, completion: nil)
+    }
+    
+    @objc
+    private func onDeleteEditingItems(_ button: UIBarButtonItem) {
+        let selection = tableView.indexPathsForSelectedRows ?? []
+        onCancelEditingItems(button)
+        
+        let rows = selection.map({
+            (index: $0.row, item: PlaylistManager.shared.itemAtIndex($0.row))
+        })
+        
+        for row in rows {
+            if let item = row.item {
+                delegate?.deleteItem(item: item, at: row.index)
+            }
+        }
+    }
+    
     override var preferredStatusBarStyle: UIStatusBarStyle {
         .lightContent
     }
@@ -267,6 +373,7 @@ class PlaylistListViewController: UIViewController {
             
             // If the player view is in fullscreen, we should NOT change the tableView layout on rotation.
             view.addSubview(tableView)
+            view.addSubview(toolbar)
             view.addSubview(playerView)
             playerView.addSubview(activityIndicator)
             
@@ -304,7 +411,14 @@ class PlaylistListViewController: UIViewController {
                     }
                     
                     tableView.snp.remakeConstraints {
-                        $0.edges.equalToSuperview()
+                        $0.top.equalToSuperview()
+                        $0.leading.trailing.equalToSuperview()
+                    }
+                    
+                    toolbar.snp.remakeConstraints {
+                        $0.leading.trailing.equalToSuperview()
+                        $0.top.equalTo(tableView.snp.bottom)
+                        $0.bottom.equalTo(view.safeArea.bottom)
                     }
                     
                     // On iPhone-8, 14.4, I need to scroll the tableView after setting its contentOffset and contentInset
@@ -334,6 +448,7 @@ class PlaylistListViewController: UIViewController {
             }
             
             view.addSubview(tableView)
+            view.addSubview(toolbar)
             playerView.addSubview(activityIndicator)
             
             tableView.do {
@@ -347,7 +462,14 @@ class PlaylistListViewController: UIViewController {
             }
             
             tableView.snp.remakeConstraints {
-                $0.edges.equalToSuperview()
+                $0.top.equalToSuperview()
+                $0.leading.trailing.equalToSuperview()
+            }
+            
+            toolbar.snp.remakeConstraints {
+                $0.leading.trailing.equalToSuperview()
+                $0.top.equalTo(tableView.snp.bottom)
+                $0.bottom.equalTo(view.safeArea.bottom)
             }
         }
     }
@@ -505,7 +627,7 @@ extension PlaylistListViewController {
 
 // MARK: - PlaylistManagerDelegate
 
-extension PlaylistListViewController: PlaylistManagerDelegate {
+extension PlaylistListViewController {
     func updateCellDownloadStatus(indexPath: IndexPath, cell: PlaylistCell?, state: PlaylistDownloadManager.DownloadState, percentComplete: Double?) {
         
         guard let cell = cell ?? tableView.cellForRow(at: indexPath) as? PlaylistCell else {

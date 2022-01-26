@@ -32,6 +32,14 @@ extension PlaylistListViewController: UITableViewDelegate {
         self.present(activityViewController, animated: true, completion: nil)
     }
     
+    func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
+        .none
+    }
+    
+    func tableView(_ tableView: UITableView, shouldIndentWhileEditingRowAt indexPath: IndexPath) -> Bool {
+        false
+    }
+    
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         
         if indexPath.row < 0 || indexPath.row >= PlaylistManager.shared.numberOfAssets {
@@ -175,7 +183,6 @@ extension PlaylistListViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if tableView.isEditing {
-            tableView.setEditing(false, animated: true)
             return
         }
         

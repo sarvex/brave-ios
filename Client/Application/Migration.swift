@@ -144,10 +144,42 @@ class Migration {
         }
     }
     
+    private static func movePlaylistV2Items() {
+        func migrateItemsToSavedFolder(folderUUID: String) {
+            let frc = PlaylistItem.frc(parentFolder: nil)
+            do {
+                try frc.performFetch()
+                if let items = frc.fetchedObjects, !items.isEmpty {
+                    PlaylistItem.moveItems(items: items.map({ $0.objectID }), to: folderUUID)
+                }
+                
+                Preferences.Migration.playlistV2FoldersInitialMigrationCompleted.value = true
+            } catch {
+                log.error("Failed Moving Playlist items to Saved Folder: \(error)")
+            }
+        }
+        
+        if PlaylistFolder.getFolder(uuid: PlaylistFolder.savedFolderUUID) != nil {
+            migrateItemsToSavedFolder(folderUUID: PlaylistFolder.savedFolderUUID)
+        } else {
+            PlaylistFolder.addFolder(title: "Saved", uuid: PlaylistFolder.savedFolderUUID) { uuid in
+                if PlaylistFolder.getFolder(uuid: uuid) != nil {
+                    migrateItemsToSavedFolder(folderUUID: uuid)
+                } else {
+                    log.error("Failed Moving Playlist items to Saved Folder - Unknown Error")
+                }
+            }
+        }
+    }
+    
     static func postCoreDataInitMigrations() {
         if !Preferences.Migration.removeLargeFaviconsMigrationCompleted.value {
             FaviconMO.clearTooLargeFavicons()
             Preferences.Migration.removeLargeFaviconsMigrationCompleted.value = true
+        }
+        
+        if !Preferences.Migration.playlistV2FoldersInitialMigrationCompleted.value {
+            movePlaylistV2Items()
         }
         
         if Preferences.Migration.coreDataCompleted.value { return }
@@ -178,6 +210,8 @@ fileprivate extension Preferences {
             Option<Bool>(key: "migration.documents-dir-completed", default: false)
         static let playlistV1FileSettingsLocationCompleted =
             Option<Bool>(key: "migration.playlistv1-file-settings-location-completed", default: false)
+        static let playlistV2FoldersInitialMigrationCompleted =
+            Option<Bool>(key: "migration.playlistv2-folders-initial-migration-completed", default: false)
         static let removeLargeFaviconsMigrationCompleted =
             Option<Bool>(key: "migration.remove-large-favicons", default: false)
         // This is new preference introduced in iOS 1.32.3, tracks whether we should perform database migration.

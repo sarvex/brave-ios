@@ -41,6 +41,14 @@ extension PlaylistListViewController: UITableViewDataSource {
         }
     }
     
+    func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+        true
+    }
+    
+    func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
+        !tableView.isEditing
+    }
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         PlaylistManager.shared.numberOfAssets
     }
@@ -71,7 +79,8 @@ extension PlaylistListViewController: UITableViewDataSource {
         let domain = URL(string: item.pageSrc)?.baseDomain ?? "0s"
         
         cell.do {
-            $0.selectionStyle = .none
+//            $0.selectionStyle = .none
+            $0.showsReorderControl = false
             $0.titleLabel.text = item.name
             $0.detailLabel.text = domain
             $0.contentView.backgroundColor = .clear

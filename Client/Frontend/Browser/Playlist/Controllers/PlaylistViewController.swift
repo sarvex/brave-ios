@@ -49,9 +49,11 @@ class PlaylistViewController: UIViewController {
     private let mediaStreamer: PlaylistMediaStreamer
     
     private let splitController = UISplitViewController()
+    private let folderController = PlaylistFolderController()
     private lazy var listController = PlaylistListViewController(playerView: playerView)
     private let detailController = PlaylistDetailViewController()
     
+    private var folderObserver: AnyCancellable?
     private var playerStateObservers = Set<AnyCancellable>()
     private var assetStateObservers = Set<AnyCancellable>()
     private var assetLoadingStateObservers = Set<AnyCancellable>()
@@ -125,17 +127,32 @@ class PlaylistViewController: UIViewController {
         attachPlayerView()
         updatePlayerUI()
         observePlayerStates()
+        observeFolderStates()
         listController.delegate = self
         
         // Layout
         splitController.do {
-            $0.viewControllers = [SettingsNavigationController(rootViewController: listController),
+            $0.viewControllers = [SettingsNavigationController(rootViewController: folderController),
                                   SettingsNavigationController(rootViewController: detailController)]
             $0.delegate = self
             $0.primaryEdge = PlayListSide(rawValue: Preferences.Playlist.listViewSide.value) == .left ? .leading : .trailing
             $0.presentsWithGesture = false
             $0.maximumPrimaryColumnWidth = 400
             $0.minimumPrimaryColumnWidth = 400
+        }
+        
+        if let url = Preferences.Playlist.lastPlayedItemUrl.value,
+           let item = PlaylistItem.getItem(pageSrc: url) {
+            PlaylistManager.shared.currentFolder = item.playlistFolder
+        } else if let initialItem = listController.initialItem,
+                  let item = PlaylistItem.getItem(pageSrc: initialItem.pageSrc) {
+            PlaylistManager.shared.currentFolder = item.playlistFolder
+        } else {
+            PlaylistManager.shared.currentFolder = nil
+        }
+        
+        if PlaylistManager.shared.currentFolder != nil {
+            folderController.navigationController?.pushViewController(listController, animated: false)
         }
         
         addChild(splitController)
@@ -172,6 +189,25 @@ class PlaylistViewController: UIViewController {
             listController.updateLayoutForMode(.pad)
             detailController.updateLayoutForMode(.pad)
         }
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        folderObserver = PlaylistManager.shared.onCurrentFolderDidChange
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in
+                guard let self = self else { return }
+                if self.listController.parent == nil {
+                    self.folderController.navigationController?.pushViewController(self.listController, animated: true)
+                }
+        }
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        folderObserver = nil
     }
     
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
@@ -355,6 +391,12 @@ class PlaylistViewController: UIViewController {
             self.playerView.infoView.pictureInPictureButton.isEnabled =
                 event.mediaPlayer.pictureInPictureController?.isPictureInPicturePossible == true
         }.store(in: &playerStateObservers)
+    }
+    
+    private func observeFolderStates() {
+        folderController.onFolderSelected = { folder in
+            PlaylistManager.shared.currentFolder = folder
+        }
     }
 }
 
