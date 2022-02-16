@@ -34,7 +34,7 @@ public class CryptoStore: ObservableObject {
   private let assetRatioService: BraveWalletAssetRatioService
   private let swapService: BraveWalletSwapService
   let blockchainRegistry: BraveWalletBlockchainRegistry
-  private let txService: BraveWalletEthTxService
+  private let txService: BraveWalletTxService
   
   public init(
     keyringService: BraveWalletKeyringService,
@@ -43,7 +43,7 @@ public class CryptoStore: ObservableObject {
     assetRatioService: BraveWalletAssetRatioService,
     swapService: BraveWalletSwapService,
     blockchainRegistry: BraveWalletBlockchainRegistry,
-    txService: BraveWalletEthTxService
+    txService: BraveWalletTxService
   ) {
     self.keyringService = keyringService
     self.rpcService = rpcService
@@ -184,8 +184,8 @@ public class CryptoStore: ObservableObject {
       var pendingTransactions: [BraveWallet.TransactionInfo] = []
       let group = DispatchGroup()
       for info in keyring.accountInfos {
-        group.enter()
-        txService.allTransactionInfo(info.address) { tx in
+        group.enter()        
+        txService.allTransactionInfo(.eth, from: info.address) { tx in
           defer { group.leave() }
           pendingTransactions.append(contentsOf: tx.filter { $0.txStatus == .unapproved })
         }
@@ -206,7 +206,7 @@ public class CryptoStore: ObservableObject {
   }
 }
 
-extension CryptoStore: BraveWalletEthTxServiceObserver {
+extension CryptoStore: BraveWalletTxServiceObserver {
   public func onNewUnapprovedTx(_ txInfo: BraveWallet.TransactionInfo) {
     fetchUnapprovedTransactions()
   }

@@ -24,7 +24,7 @@ public class WalletStore {
     assetRatioService: BraveWalletAssetRatioService,
     swapService: BraveWalletSwapService,
     blockchainRegistry: BraveWalletBlockchainRegistry,
-    txService: BraveWalletEthTxService
+    txService: BraveWalletTxService
   ) {
     self.keyringStore = .init(keyringService: keyringService)
     self.setUp(
@@ -45,7 +45,7 @@ public class WalletStore {
     assetRatioService: BraveWalletAssetRatioService,
     swapService: BraveWalletSwapService,
     blockchainRegistry: BraveWalletBlockchainRegistry,
-    txService: BraveWalletEthTxService
+    txService: BraveWalletTxService
   ) {
     self.cancellable = self.keyringStore.$keyring
       .map(\.isKeyringCreated)

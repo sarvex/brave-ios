@@ -100,7 +100,7 @@ public class SwapTokenStore: ObservableObject {
   private let rpcService: BraveWalletJsonRpcService
   private let assetRatioService: BraveWalletAssetRatioService
   private let swapService: BraveWalletSwapService
-  private let txService: BraveWalletEthTxService
+  private let txService: BraveWalletTxService
   private var accountInfo: BraveWallet.AccountInfo?
   private var slippage = 0.005 {
     didSet {
@@ -141,7 +141,7 @@ public class SwapTokenStore: ObservableObject {
     rpcService: BraveWalletJsonRpcService,
     assetRatioService: BraveWalletAssetRatioService,
     swapService: BraveWalletSwapService,
-    txService: BraveWalletEthTxService,
+    txService: BraveWalletTxService,
     prefilledToken: BraveWallet.BlockchainToken?
   ) {
     self.keyringService = keyringService
@@ -273,7 +273,8 @@ public class SwapTokenStore: ObservableObject {
             value: value,
             data: data
           )
-          self.txService.addUnapprovedTransaction(baseData, from: accountInfo.address) { success, txMetaId, error in
+          let baseDataUnion = BraveWallet.TxDataUnion(ethTxData: baseData)
+          self.txService.addUnapprovedTransaction(baseDataUnion, from: accountInfo.address) { success, txMetaId, error in
             guard success else {
               self.state = .error(Strings.Wallet.unknownError)
               self.clearAllAmount()
@@ -356,45 +357,45 @@ public class SwapTokenStore: ObservableObject {
     isMakingTx = true
     rpcService.network { [weak self] network in
       guard let self = self else { return }
-      self.txService.makeErc20ApproveData(
-        spenderAddress,
-        amount: "0x\(balanceInWeiHex)"
-      ) { success, data in
-        guard success else { return }
-        let baseData = BraveWallet.TxData(
-          nonce: "",
-          gasPrice: "",
-          gasLimit: "",
-          to: fromToken.contractAddress(in: network),
-          value: "0x0",
-          data: data
-        )
-        if network.isEip1559 {
-          self.makeEIP1559Tx(chainId: network.chainId,
-                             baseData: baseData,
-                             from: accountInfo) { success in
-            guard success else {
-              self.state = .error(Strings.Wallet.unknownError)
-              self.clearAllAmount()
-              return
-            }
-            self.isMakingTx = false
-          }
-        } else {
-          self.txService.addUnapprovedTransaction(
-              baseData,
-              from: accountInfo.address,
-              completion: { success, txMetaId, error in
-                guard success else {
-                  self.state = .error(Strings.Wallet.unknownError)
-                  self.clearAllAmount()
-                  return
-                }
-                self.isMakingTx = false
-              }
-          )
-        }
-      }
+//      self.txService.makeErc20ApproveData(
+//        spenderAddress,
+//        amount: "0x\(balanceInWeiHex)"
+//      ) { success, data in
+//        guard success else { return }
+//        let baseData = BraveWallet.TxData(
+//          nonce: "",
+//          gasPrice: "",
+//          gasLimit: "",
+//          to: fromToken.contractAddress(in: network),
+//          value: "0x0",
+//          data: data
+//        )
+//        if network.isEip1559 {
+//          self.makeEIP1559Tx(chainId: network.chainId,
+//                             baseData: baseData,
+//                             from: accountInfo) { success in
+//            guard success else {
+//              self.state = .error(Strings.Wallet.unknownError)
+//              self.clearAllAmount()
+//              return
+//            }
+//            self.isMakingTx = false
+//          }
+//        } else {
+//          self.txService.addUnapprovedTransaction(
+//              baseData,
+//              from: accountInfo.address,
+//              completion: { success, txMetaId, error in
+//                guard success else {
+//                  self.state = .error(Strings.Wallet.unknownError)
+//                  self.clearAllAmount()
+//                  return
+//                }
+//                self.isMakingTx = false
+//              }
+//          )
+//        }
+//      }
     }
   }
   
@@ -407,24 +408,24 @@ public class SwapTokenStore: ObservableObject {
     var maxPriorityFeePerGas = ""
     var maxFeePerGas = ""
     
-    txService.gasEstimation1559 { [weak self] gasEstimation in
-      guard let self = self else { return }
-      if let gasEstimation = gasEstimation {
-        // Bump fast priority fee and max fee by 1 GWei if same as average fees.
-        if gasEstimation.fastMaxPriorityFeePerGas == gasEstimation.avgMaxPriorityFeePerGas {
-          maxPriorityFeePerGas = "0x\(self.bumpFeeByOneGWei(with: gasEstimation.fastMaxPriorityFeePerGas) ?? "0")"
-          maxFeePerGas = "0x\(self.bumpFeeByOneGWei(with: gasEstimation.fastMaxFeePerGas) ?? "0")"
-        } else {
-          // Always suggest fast gas fees as default
-          maxPriorityFeePerGas = gasEstimation.fastMaxPriorityFeePerGas
-          maxFeePerGas = gasEstimation.fastMaxFeePerGas
-        }
-      }
-      let eip1559Data = BraveWallet.TxData1559(baseData: baseData, chainId: chainId, maxPriorityFeePerGas: maxPriorityFeePerGas, maxFeePerGas: maxFeePerGas, gasEstimation: gasEstimation)
-      self.txService.addUnapproved1559Transaction(eip1559Data, from: account.address) { success, txMetaId, errorMessage in
-        completion(success)
-      }
-    }
+//    txService.gasEstimation1559 { [weak self] gasEstimation in
+//      guard let self = self else { return }
+//      if let gasEstimation = gasEstimation {
+//        // Bump fast priority fee and max fee by 1 GWei if same as average fees.
+//        if gasEstimation.fastMaxPriorityFeePerGas == gasEstimation.avgMaxPriorityFeePerGas {
+//          maxPriorityFeePerGas = "0x\(self.bumpFeeByOneGWei(with: gasEstimation.fastMaxPriorityFeePerGas) ?? "0")"
+//          maxFeePerGas = "0x\(self.bumpFeeByOneGWei(with: gasEstimation.fastMaxFeePerGas) ?? "0")"
+//        } else {
+//          // Always suggest fast gas fees as default
+//          maxPriorityFeePerGas = gasEstimation.fastMaxPriorityFeePerGas
+//          maxFeePerGas = gasEstimation.fastMaxFeePerGas
+//        }
+//      }
+//      let eip1559Data = BraveWallet.TxData1559(baseData: baseData, chainId: chainId, maxPriorityFeePerGas: maxPriorityFeePerGas, maxFeePerGas: maxFeePerGas, gasEstimation: gasEstimation)
+//      self.txService.addUnapproved1559Transaction(eip1559Data, from: account.address) { success, txMetaId, errorMessage in
+//        completion(success)
+//      }
+//    }
   }
   
   private func bumpFeeByOneGWei(with value: String) -> String? {

@@ -58,7 +58,7 @@ struct TransactionConfirmationView: View {
   }
   
   private var toAccountName: String {
-    NamedAddresses.name(for: activeTransaction.txData.baseData.to, accounts: keyringStore.keyring.accountInfos)
+    return "" //NamedAddresses.name(for: activeTransaction.txData.baseData.to, accounts: keyringStore.keyring.accountInfos)
   }
   
   private var transactionType: String {
@@ -69,51 +69,53 @@ struct TransactionConfirmationView: View {
   }
   
   private var transactionDetails: String {
-    if activeTransaction.txArgs.isEmpty {
-      let data = activeTransaction.txData.baseData.data
-        .map { byte in
-          String(format: "%02X", byte.uint8Value)
-        }
-        .joined()
-      if data.isEmpty {
-        return Strings.Wallet.inputDataPlaceholder
-      }
-      return "0x\(data)"
-    } else {
-      return zip(activeTransaction.txParams, activeTransaction.txArgs)
-        .map { (param, arg) in
-          "\(param): \(arg)"
-        }
-        .joined(separator: "\n\n")
-    }
+    return ""
+//    if activeTransaction.txArgs.isEmpty {
+//      let data = activeTransaction.txData.baseData.data
+//        .map { byte in
+//          String(format: "%02X", byte.uint8Value)
+//        }
+//        .joined()
+//      if data.isEmpty {
+//        return Strings.Wallet.inputDataPlaceholder
+//      }
+//      return "0x\(data)"
+//    } else {
+//      return zip(activeTransaction.txParams, activeTransaction.txArgs)
+//        .map { (param, arg) in
+//          "\(param): \(arg)"
+//        }
+//        .joined(separator: "\n\n")
+//    } 
   }
   
   @ViewBuilder private var editGasFeeButton: some View {
-    let titleView = Text(Strings.Wallet.editGasFeeButtonTitle)
-      .fontWeight(.semibold)
-      .foregroundColor(Color(.braveBlurpleTint))
-    Group {
-      if activeTransaction.isEIP1559Transaction {
-        if let gasEstimation = activeTransaction.txData.gasEstimation {
-          NavigationLink(
-            destination: EditPriorityFeeView(
-              transaction: activeTransaction,
-              gasEstimation: gasEstimation,
-              confirmationStore: confirmationStore
-            )
-          ) {
-            titleView
-          }
-        }
-      } else {
-        NavigationLink(
-          destination: EditGasFeeView(transaction: activeTransaction, confirmationStore: confirmationStore)
-        ) {
-          titleView
-        }
-      }
-    }
-    .font(.footnote)
+//    let titleView = Text(Strings.Wallet.editGasFeeButtonTitle)
+//      .fontWeight(.semibold)
+//      .foregroundColor(Color(.braveBlurpleTint))
+//    Group {
+//      if activeTransaction.isEIP1559Transaction {
+//        if let gasEstimation = activeTransaction.txData.gasEstimation {
+//          NavigationLink(
+//            destination: EditPriorityFeeView(
+//              transaction: activeTransaction,
+//              gasEstimation: gasEstimation,
+//              confirmationStore: confirmationStore
+//            )
+//          ) {
+//            titleView
+//          }
+//        }
+//      } else {
+//        NavigationLink(
+//          destination: EditGasFeeView(transaction: activeTransaction, confirmationStore: confirmationStore)
+//        ) {
+//          titleView
+//        }
+//      }
+//    }
+//    .font(.footnote)
+    EmptyView()
   }
   
   var body: some View {
@@ -139,11 +141,11 @@ struct TransactionConfirmationView: View {
           // Summary
           VStack(spacing: 8) {
             VStack {
-              BlockieGroup(
-                fromAddress: activeTransaction.fromAddress,
-                toAddress: activeTransaction.txData.baseData.to,
-                size: 48
-              )
+//              BlockieGroup(
+//                fromAddress: activeTransaction.fromAddress,
+//                toAddress: activeTransaction.txData.baseData.to,
+//                size: 48
+//              )
               Group {
                 if sizeCategory.isAccessibilityCategory {
                   VStack {
@@ -372,21 +374,23 @@ private struct DetailsTextView: UIViewRepresentable {
 #if DEBUG
 struct TransactionConfirmationView_Previews: PreviewProvider {
   static var previews: some View {
-    TransactionConfirmationView(
-      transactions: [
-        BraveWallet.TransactionInfo.previewConfirmedERC20Approve,
-        .previewConfirmedSend,
-        .previewConfirmedSwap
-      ].map {
-        tx in
-        tx.txStatus = .unapproved
-        return tx
-      },
-      confirmationStore: .previewStore,
-      networkStore: .previewStore,
-      keyringStore: .previewStoreWithWalletCreated
-    )
-      .previewLayout(.sizeThatFits)
+//    TransactionConfirmationView(
+//      transactions: [
+//        BraveWallet.TransactionInfo.previewConfirmedERC20Approve,
+//        .previewConfirmedSend,
+//        .previewConfirmedSwap
+//      ].map {
+//        tx in
+//        tx.txStatus = .unapproved
+//        return tx
+//      },
+//      confirmationStore: .previewStore,
+//      networkStore: .previewStore,
+//      keyringStore: .previewStoreWithWalletCreated
+//    )
+//      .previewLayout(.sizeThatFits)
+    
+    EmptyView()
   }
 }
 #endif

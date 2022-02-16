@@ -174,7 +174,7 @@ extension BrowserViewController {
             let assetRatioService = BraveWallet.AssetRatioServiceFactory.get(privateMode: privateMode),
             let walletService = BraveWallet.ServiceFactory.get(privateMode: privateMode),
             let swapService = BraveWallet.SwapServiceFactory.get(privateMode: privateMode),
-            let txService = BraveWallet.EthTxServiceFactory.get(privateMode: privateMode)
+            let txService = BraveWallet.TxServiceFactory.get(privateMode: privateMode)
         else {
             log.error("Failed to load wallet. One or more services were unavailable")
             return

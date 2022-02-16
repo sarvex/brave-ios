@@ -10,12 +10,13 @@ import Swift
 import struct Shared.Strings
 
 extension BraveWallet.TransactionInfo {
+  // TODO: CHECK 1559
   var isSwap: Bool {
-    txData.baseData.to
+    txDataUnion.ethTxData?.to
       .caseInsensitiveCompare(NamedAddresses.swapExchangeProxyAddress) == .orderedSame
   }
   var isEIP1559Transaction: Bool {
-    !txData.maxPriorityFeePerGas.isEmpty && !txData.maxFeePerGas.isEmpty
+    !(txDataUnion.ethTxData1559?.maxPriorityFeePerGas.isEmpty ?? false) && !(txDataUnion.ethTxData1559?.maxFeePerGas.isEmpty ?? false)
   }
 }
 
@@ -43,10 +44,14 @@ struct TransactionView: View {
   }
   
   private var gasFee: (String, fiat: String)? {
+    // TODO: CHECK 1559
+    guard let ethTxData = info.txDataUnion.ethTxData, let ethTxData1559 = info.txDataUnion.ethTxData1559 else {
+      return nil
+    }
+    
     let isEIP1559Transaction = info.isEIP1559Transaction
-    let limit = info.txData.baseData.gasLimit
-    let formatter = WeiFormatter(decimalFormatStyle: .gasFee(limit: limit.removingHexPrefix, radix: .hex))
-    let hexFee = isEIP1559Transaction ? info.txData.maxFeePerGas : info.txData.baseData.gasPrice
+    let formatter = WeiFormatter(decimalFormatStyle: .gasFee(limit: ethTxData.gasLimit.removingHexPrefix, radix: .hex))
+    let hexFee = isEIP1559Transaction ? ethTxData1559.maxFeePerGas : ethTxData.gasPrice
     if let value = formatter.decimalString(for: hexFee.removingHexPrefix, radix: .hex, decimals: Int(networkStore.selectedChain.decimals)) {
       return (value, {
         guard let doubleValue = Double(value), let assetRatio = assetRatios[networkStore.selectedChain.symbol.lowercased()] else {
@@ -59,43 +64,48 @@ struct TransactionView: View {
   }
   
   @ViewBuilder private var title: some View {
-    let formatter = WeiFormatter(decimalFormatStyle: .balance)
-    switch info.txType {
-    case .erc20Approve:
-      if info.txArgs.count > 1, let token = visibleTokens.first(where: {
-        $0.contractAddress == info.txArgs[0]
-      }) {
-        Text(String.localizedStringWithFormat(Strings.Wallet.transactionApproveSymbolTitle, formatter.decimalString(for: info.txArgs[1].removingHexPrefix, radix: .hex, decimals: Int(token.decimals)) ?? "", token.symbol))
-      } else {
-        Text(Strings.Wallet.transactionUnknownApprovalTitle)
+    // TODO: CHECK 1559
+    if let ethTxData = info.txDataUnion.ethTxData {
+      let formatter = WeiFormatter(decimalFormatStyle: .balance)
+      switch info.txType {
+      case .erc20Approve:
+        if info.txArgs.count > 1, let token = visibleTokens.first(where: {
+          $0.contractAddress == info.txArgs[0]
+        }) {
+          Text(String.localizedStringWithFormat(Strings.Wallet.transactionApproveSymbolTitle, formatter.decimalString(for: info.txArgs[1].removingHexPrefix, radix: .hex, decimals: Int(token.decimals)) ?? "", token.symbol))
+        } else {
+          Text(Strings.Wallet.transactionUnknownApprovalTitle)
+        }
+      case .ethSend, .other:
+          let amount = formatter.decimalString(for: ethTxData.value.removingHexPrefix, radix: .hex, decimals: Int(networkStore.selectedChain.decimals)) ?? ""
+        let fiat = numberFormatter.string(from: NSNumber(value: assetRatios[networkStore.selectedChain.symbol.lowercased(), default: 0] * (Double(amount) ?? 0))) ?? "$0.00"
+        if info.isSwap {
+          Text(String.localizedStringWithFormat(Strings.Wallet.transactionSwapTitle, amount, networkStore.selectedChain.symbol, fiat))
+        } else {
+          Text(String.localizedStringWithFormat(Strings.Wallet.transactionSendTitle, amount, networkStore.selectedChain.symbol, fiat))
+        }
+      case .erc20Transfer:
+        if info.txArgs.count > 1, let token = visibleTokens.first(where: {
+          $0.contractAddress.caseInsensitiveCompare(ethTxData.to) == .orderedSame
+        }) {
+          let amount = formatter.decimalString(for: info.txArgs[1].removingHexPrefix, radix: .hex, decimals: Int(token.decimals)) ?? ""
+          let fiat = numberFormatter.string(from: NSNumber(value: assetRatios[token.symbol.lowercased(), default: 0] * (Double(amount) ?? 0))) ?? "$0.00"
+          Text(String.localizedStringWithFormat(Strings.Wallet.transactionSendTitle, amount, token.symbol, fiat))
+        } else {
+          Text(Strings.Wallet.send)
+        }
+      case .erc721TransferFrom, .erc721SafeTransferFrom:
+        if let token = visibleTokens.first(where: {
+          $0.contractAddress.caseInsensitiveCompare(ethTxData.to) == .orderedSame
+        }) {
+          Text(String.localizedStringWithFormat(Strings.Wallet.transactionUnknownSendTitle, token.symbol))
+        } else {
+          Text(Strings.Wallet.send)
+        }
+      @unknown default:
+        EmptyView()
       }
-    case .ethSend, .other:
-      let amount = formatter.decimalString(for: info.txData.baseData.value.removingHexPrefix, radix: .hex, decimals: Int(networkStore.selectedChain.decimals)) ?? ""
-      let fiat = numberFormatter.string(from: NSNumber(value: assetRatios[networkStore.selectedChain.symbol.lowercased(), default: 0] * (Double(amount) ?? 0))) ?? "$0.00"
-      if info.isSwap {
-        Text(String.localizedStringWithFormat(Strings.Wallet.transactionSwapTitle, amount, networkStore.selectedChain.symbol, fiat))
-      } else {
-        Text(String.localizedStringWithFormat(Strings.Wallet.transactionSendTitle, amount, networkStore.selectedChain.symbol, fiat))
-      }
-    case .erc20Transfer:
-      if info.txArgs.count > 1, let token = visibleTokens.first(where: {
-        $0.contractAddress.caseInsensitiveCompare(info.txData.baseData.to) == .orderedSame
-      }) {
-        let amount = formatter.decimalString(for: info.txArgs[1].removingHexPrefix, radix: .hex, decimals: Int(token.decimals)) ?? ""
-        let fiat = numberFormatter.string(from: NSNumber(value: assetRatios[token.symbol.lowercased(), default: 0] * (Double(amount) ?? 0))) ?? "$0.00"
-        Text(String.localizedStringWithFormat(Strings.Wallet.transactionSendTitle, amount, token.symbol, fiat))
-      } else {
-        Text(Strings.Wallet.send)
-      }
-    case .erc721TransferFrom, .erc721SafeTransferFrom:
-      if let token = visibleTokens.first(where: {
-        $0.contractAddress.caseInsensitiveCompare(info.txData.baseData.to) == .orderedSame
-      }) {
-        Text(String.localizedStringWithFormat(Strings.Wallet.transactionUnknownSendTitle, token.symbol))
-      } else {
-        Text(Strings.Wallet.send)
-      }
-    @unknown default:
+    } else {
       EmptyView()
     }
   }
@@ -103,14 +113,18 @@ struct TransactionView: View {
   @ViewBuilder private var subtitle: some View {
     // For the time being, use the same subtitle label until we have the ability to parse
     // Swap from/to addresses
+    // TODO: CHECK 1559
     let from = namedAddress(for: info.fromAddress)
-    let to = namedAddress(for: info.txData.baseData.to)
-    Text("\(from) \(Image(systemName: "arrow.right")) \(to)")
-      .accessibilityLabel(
-        String.localizedStringWithFormat(
-          Strings.Wallet.transactionFromToAccessibilityLabel, from, to
-        )
-      )
+//    if let to = namedAddress(for: info.txDataUnion.ethTxData.to) {
+//      Text("\(from) \(Image(systemName: "arrow.right")) \(to)")
+//        .accessibilityLabel(
+//          String.localizedStringWithFormat(
+//            Strings.Wallet.transactionFromToAccessibilityLabel, from, to
+//          )
+//        )
+//    } else {
+//      EmptyView()
+//    }
   }
   
   private var metadata: Text {
@@ -123,12 +137,12 @@ struct TransactionView: View {
   
   var body: some View {
     HStack(spacing: 12) {
-      BlockieGroup(
-        fromAddress: info.fromAddress,
-        toAddress: info.txData.baseData.to,
-        alignVisuallyCentered: false
-      )
-      .accessibilityHidden(true)
+//      BlockieGroup(
+//        fromAddress: info.fromAddress,
+//        toAddress: info.txData.baseData.to,
+//        alignVisuallyCentered: false
+//      )
+//      .accessibilityHidden(true)
       VStack(alignment: .leading, spacing: 4) {
         title
           .font(.footnote.weight(.semibold))
@@ -211,30 +225,30 @@ extension BraveWallet.TransactionStatus {
 struct Transaction_Previews: PreviewProvider {
   static var previews: some View {
     Group {
-      TransactionView(
-        info: .previewConfirmedSend,
-        keyringStore: .previewStoreWithWalletCreated,
-        networkStore: .previewStore,
-        visibleTokens: [.previewToken],
-        displayAccountCreator: false,
-        assetRatios: ["eth": 4576.36]
-      )
-      TransactionView(
-        info: .previewConfirmedSwap,
-        keyringStore: .previewStoreWithWalletCreated,
-        networkStore: .previewStore,
-        visibleTokens: [.previewToken],
-        displayAccountCreator: true,
-        assetRatios: ["eth": 4576.36]
-      )
-      TransactionView(
-        info: .previewConfirmedERC20Approve,
-        keyringStore: .previewStoreWithWalletCreated,
-        networkStore: .previewStore,
-        visibleTokens: [.previewToken],
-        displayAccountCreator: false,
-        assetRatios: ["eth": 4576.36]
-      )
+//      TransactionView(
+//        info: .previewConfirmedSend,
+//        keyringStore: .previewStoreWithWalletCreated,
+//        networkStore: .previewStore,
+//        visibleTokens: [.previewToken],
+//        displayAccountCreator: false,
+//        assetRatios: ["eth": 4576.36]
+//      )
+//      TransactionView(
+//        info: .previewConfirmedSwap,
+//        keyringStore: .previewStoreWithWalletCreated,
+//        networkStore: .previewStore,
+//        visibleTokens: [.previewToken],
+//        displayAccountCreator: true,
+//        assetRatios: ["eth": 4576.36]
+//      )
+//      TransactionView(
+//        info: .previewConfirmedERC20Approve,
+//        keyringStore: .previewStoreWithWalletCreated,
+//        networkStore: .previewStore,
+//        visibleTokens: [.previewToken],
+//        displayAccountCreator: false,
+//        assetRatios: ["eth": 4576.36]
+//      )
     }
     .padding(12)
     .previewLayout(.sizeThatFits)

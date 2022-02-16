@@ -36,12 +36,17 @@ struct EditPriorityFeeView: View {
   @State private var baseInGwei: String = ""
   
   private func setup() {
-    let selectedMaxPrice = transaction.txData.maxFeePerGas
-    let selectedMaxTip = transaction.txData.maxPriorityFeePerGas
+    // TODO: CHECK 1559
+    guard let selectedMaxPrice = transaction.txDataUnion.ethTxData1559?.maxFeePerGas,
+          let selectedMaxTip = transaction.txDataUnion.ethTxData1559?.maxPriorityFeePerGas else {
+            return
+    }
     
     // Gas limit is already in Gwei…
     gasLimit = {
-      guard let value = BDouble(transaction.txData.baseData.gasLimit.removingHexPrefix, radix: 16) else {
+      // TODO: CHECK 1559
+      guard let hexPrefix = transaction.txDataUnion.ethTxData?.gasLimit.removingHexPrefix,
+            let value = BDouble(hexPrefix, radix: 16) else {
         return ""
       }
       if value.denominator == [1] {
@@ -70,7 +75,7 @@ struct EditPriorityFeeView: View {
   
   private func save() {
     // See `isSaveButtonDisabled` for validation
-    var hexGasLimit = transaction.txData.baseData.gasLimit
+    var hexGasLimit = transaction.txDataUnion.ethTxData?.gasLimit //transaction.txData.baseData.gasLimit
     let hexGasFee: String
     let hexGasTip: String
     switch gasFeeKind {
@@ -96,18 +101,18 @@ struct EditPriorityFeeView: View {
       hexGasTip = "0x\(gasTip)"
     }
     
-    confirmationStore.updateGasFeeAndLimits(
-      for: transaction,
-      maxPriorityFeePerGas: hexGasTip,
-      maxFeePerGas: hexGasFee,
-      gasLimit: hexGasLimit
-    ) { success in
-      if success {
-        presentationMode.dismiss()
-      } else {
-        // Show error?
-      }
-    }
+//    confirmationStore.updateGasFeeAndLimits(
+//      for: transaction,
+//      maxPriorityFeePerGas: hexGasTip,
+//      maxFeePerGas: hexGasFee,
+//      gasLimit: hexGasLimit
+//    ) { success in
+//      if success {
+//        presentationMode.dismiss()
+//      } else {
+//        // Show error?
+//      }
+//    }
   }
   
   private var calculatedMaximumFee: String {
@@ -261,7 +266,7 @@ struct EditPriorityFeeView: View {
 struct EditPriorityFeeView_Previews: PreviewProvider {
   static var previews: some View {
     NavigationView {
-      EditPriorityFeeView(transaction: .previewConfirmedSend, gasEstimation: .init(), confirmationStore: .previewStore)
+//      EditPriorityFeeView(transaction: .previewConfirmedSend, gasEstimation: .init(), confirmationStore: .previewStore)
     }
     .previewColorSchemes()
   }

@@ -8,7 +8,8 @@ import BraveCore
 
 #if DEBUG
 
-class MockEthTxService: BraveWalletEthTxService {
+class MockEthTxService: BraveWalletTxService {
+  
   func gasEstimation1559(_ completion: @escaping (BraveWallet.GasEstimation1559?) -> Void) {
     completion(nil)
   }
@@ -17,7 +18,7 @@ class MockEthTxService: BraveWalletEthTxService {
     completion(nil)
   }
   
-  func transactionMessage(toSign txMetaId: String, completion: @escaping (String?) -> Void) {
+  func transactionMessage(toSign coinType: BraveWallet.CoinType, txMetaId: String, completion: @escaping (String?) -> Void) {
     completion(nil)
   }
   
@@ -29,7 +30,7 @@ class MockEthTxService: BraveWalletEthTxService {
     completion(false, [])
   }
   
-  func addUnapprovedTransaction(_ txData: BraveWallet.TxData, from: String, completion: @escaping (Bool, String, String) -> Void) {
+  func addUnapprovedTransaction(_ txDataUnion: BraveWallet.TxDataUnion, from: String, completion: @escaping (Bool, String, String) -> Void) {
     completion(true, "txMetaId", "")
   }
   
@@ -45,10 +46,10 @@ class MockEthTxService: BraveWalletEthTxService {
     completion(true, .init())
   }
   
-  func approveTransaction(_ txMetaId: String, completion: @escaping (Bool) -> Void) {
+  func approveTransaction(_ coinType: BraveWallet.CoinType, txMetaId: String, completion: @escaping (Bool) -> Void) {
   }
   
-  func rejectTransaction(_ txMetaId: String, completion: @escaping (Bool) -> Void) {
+  func rejectTransaction(_ coinType: BraveWallet.CoinType, txMetaId: String, completion: @escaping (Bool) -> Void) {
   }
   
   func setGasPriceAndLimitForUnapprovedTransaction(_ txMetaId: String, gasPrice: String, gasLimit: String, completion: @escaping (Bool) -> Void) {
@@ -67,18 +68,18 @@ class MockEthTxService: BraveWalletEthTxService {
     completion(false)
   }
   
-  func allTransactionInfo(_ from: String, completion: @escaping ([BraveWallet.TransactionInfo]) -> Void) {
+  func allTransactionInfo(_ coinType: BraveWallet.CoinType, from: String, completion: @escaping ([BraveWallet.TransactionInfo]) -> Void) {
     completion([])
   }
   
-  func add(_ observer: BraveWalletEthTxServiceObserver) {
+  func add(_ observer: BraveWalletTxServiceObserver) {
   }
   
-  func speedupOrCancelTransaction(_ txMetaId: String, cancel: Bool, completion: @escaping (Bool, String, String) -> Void) {
+  func speedupOrCancelTransaction(_ coinType: BraveWallet.CoinType, txMetaId: String, cancel: Bool, completion: @escaping (Bool, String, String) -> Void) {
     completion(false, "", "Error Message")
   }
   
-  func retryTransaction(_ txMetaId: String, completion: @escaping (Bool, String, String) -> Void) {
+  func retryTransaction(_ coinType: BraveWallet.CoinType, txMetaId: String, completion: @escaping (Bool, String, String) -> Void) {
     completion(false, "", "Error Message")
   }
   

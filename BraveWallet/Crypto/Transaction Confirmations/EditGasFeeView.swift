@@ -25,10 +25,16 @@ struct EditGasFeeView: View {
   @State private var gasLimit: String = ""
   
   private func setup() {
-    perGasPrice = WeiFormatter.weiToDecimalGwei(transaction.txData.baseData.gasPrice.removingHexPrefix, radix: .hex) ?? "0"
+    
+    // TODO: CHECK 1559
+    guard let transactionData = transaction.txDataUnion.ethTxData1559?.baseData else {
+      return
+    }
+    
+    perGasPrice = WeiFormatter.weiToDecimalGwei(transactionData.gasPrice.removingHexPrefix, radix: .hex) ?? "0"
     // Gas limit is already in Gwei…
     gasLimit = {
-      guard let value = BDouble(transaction.txData.baseData.gasLimit.removingHexPrefix, radix: 16) else {
+      guard let value = BDouble(transactionData.gasLimit.removingHexPrefix, radix: 16) else {
         return ""
       }
       if value.denominator == [1] {

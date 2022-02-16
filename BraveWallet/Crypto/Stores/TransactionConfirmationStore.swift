@@ -31,7 +31,7 @@ public class TransactionConfirmationStore: ObservableObject {
   
   private let assetRatioService: BraveWalletAssetRatioService
   private let rpcService: BraveWalletJsonRpcService
-  private let txService: BraveWalletEthTxService
+  private let txService: BraveWalletTxService
   private let blockchainRegistry: BraveWalletBlockchainRegistry
   private let walletService: BraveWalletBraveWalletService
   private var selectedChain: BraveWallet.EthereumChain = .init()
@@ -40,7 +40,7 @@ public class TransactionConfirmationStore: ObservableObject {
   init(
     assetRatioService: BraveWalletAssetRatioService,
     rpcService: BraveWalletJsonRpcService,
-    txService: BraveWalletEthTxService,
+    txService: BraveWalletTxService,
     blockchainRegistry: BraveWalletBlockchainRegistry,
     walletService: BraveWalletBraveWalletService
   ) {
@@ -54,13 +54,16 @@ public class TransactionConfirmationStore: ObservableObject {
   }
   
   func updateGasValue(for transaction: BraveWallet.TransactionInfo) {
-    let gasLimit = transaction.txData.baseData.gasLimit
-    let gasFormatter = WeiFormatter(decimalFormatStyle: .gasFee(limit: gasLimit.removingHexPrefix, radix: .hex))
+    // TODO: CHECK 1559
+    guard let ethTxData = transaction.txDataUnion.ethTxData, let ethTxData1559 = transaction.txDataUnion.ethTxData1559 else {
+      return
+    }
+    let gasFormatter = WeiFormatter(decimalFormatStyle: .gasFee(limit: ethTxData.gasLimit.removingHexPrefix, radix: .hex))
     let gasFee: String
     if transaction.isEIP1559Transaction {
-      gasFee = transaction.txData.maxFeePerGas
+      gasFee = ethTxData1559.maxFeePerGas
     } else {
-      gasFee = transaction.txData.baseData.gasPrice
+      gasFee = ethTxData1559.baseData.gasPrice
     }
     self.state.gasValue = gasFormatter.decimalString(
       for: gasFee.removingHexPrefix,
@@ -90,7 +93,10 @@ public class TransactionConfirmationStore: ObservableObject {
     activeTransaction = transaction
     
     rpcService.chainId { [weak self] chainId in
-      guard let self = self else { return }
+      // TODO: CHECK 1559
+      guard let self = self, let ethTxData = transaction.txDataUnion.ethTxData else {
+        return
+      }
       self.rpcService.network { selectedChain in
         self.selectedChain = selectedChain
         
@@ -98,8 +104,7 @@ public class TransactionConfirmationStore: ObservableObject {
         self.updateGasValue(for: transaction)
         
         let formatter = WeiFormatter(decimalFormatStyle: .balance)
-        let txValue = transaction.txData.baseData.value.removingHexPrefix
-        
+        let txValue = ethTxData.value.removingHexPrefix
         self.blockchainRegistry.allTokens(BraveWallet.MainnetChainId) { tokens in
           self.walletService.userAssets(chainId) { userAssets in
             let allTokens = tokens + userAssets.filter { asset in
@@ -117,7 +122,7 @@ public class TransactionConfirmationStore: ObservableObject {
                 self.state.value = formatter.decimalString(for: approvalValue, radix: .hex, decimals: Int(token.decimals)) ?? ""
               }
             case .erc20Transfer:
-              if let token = allTokens.first(where: { $0.contractAddress.caseInsensitiveCompare(transaction.txData.baseData.to) == .orderedSame
+                if let token = allTokens.first(where: { $0.contractAddress.caseInsensitiveCompare(ethTxData.to) == .orderedSame
               }) {
                 self.state.symbol = token.symbol
                 let value = transaction.txArgs[1].removingHexPrefix
@@ -181,12 +186,14 @@ public class TransactionConfirmationStore: ObservableObject {
   }
   
   func confirm(transaction: BraveWallet.TransactionInfo) {
-    txService.approveTransaction(transaction.id) { success in
+    // TODO: CHECK 1559
+    txService.approveTransaction(.eth, txMetaId: transaction.id) { success in
     }
   }
   
   func reject(transaction: BraveWallet.TransactionInfo) {
-    txService.rejectTransaction(transaction.id) { success in
+    // TODO: CHECK 1559
+    txService.rejectTransaction(.eth, txMetaId: transaction.id) { success in
     }
   }
   
@@ -199,14 +206,16 @@ public class TransactionConfirmationStore: ObservableObject {
   ) {
     assert(transaction.isEIP1559Transaction,
            "Use updateGasFeeAndLimits(for:gasPrice:gasLimit:) for standard transactions")
-    txService.setGasFeeAndLimitForUnapprovedTransaction(
-      transaction.id,
-      maxPriorityFeePerGas: maxPriorityFeePerGas,
-      maxFeePerGas: maxFeePerGas,
-      gasLimit: gasLimit
-    ) { success in
-      completion?(success)
-    }
+    // TODO: CHECK 1559
+
+//    txService.setGasFeeAndLimitForUnapprovedTransaction(
+//      transaction.id,
+//      maxPriorityFeePerGas: maxPriorityFeePerGas,
+//      maxFeePerGas: maxFeePerGas,
+//      gasLimit: gasLimit
+//    ) { success in
+//      completion?(success)
+//    }
   }
   
   func updateGasFeeAndLimits(
@@ -217,17 +226,20 @@ public class TransactionConfirmationStore: ObservableObject {
   ) {
     assert(!transaction.isEIP1559Transaction,
            "Use updateGasFeeAndLimits(for:maxPriorityFeePerGas:maxFeePerGas:gasLimit:) for EIP-1559 transactions")
-    txService.setGasPriceAndLimitForUnapprovedTransaction(
-      transaction.id,
-      gasPrice: gasPrice,
-      gasLimit: gasLimit
-    ) { success in
-      completion?(success)
-    }
+    
+    // TODO: CHECK 1559
+
+//    txService.setGasPriceAndLimitForUnapprovedTransaction(
+//      transaction.id,
+//      gasPrice: gasPrice,
+//      gasLimit: gasLimit
+//    ) { success in
+//      completion?(success)
+//    }
   }
 }
 
-extension TransactionConfirmationStore: BraveWalletEthTxServiceObserver {
+extension TransactionConfirmationStore: BraveWalletTxServiceObserver {
   public func onNewUnapprovedTx(_ txInfo: BraveWallet.TransactionInfo) {
   }
   public func onTransactionStatusChanged(_ txInfo: BraveWallet.TransactionInfo) {

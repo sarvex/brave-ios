@@ -53,7 +53,7 @@ public class SendTokenStore: ObservableObject {
   private let keyringService: BraveWalletKeyringService
   private let rpcService: BraveWalletJsonRpcService
   private let walletService: BraveWalletBraveWalletService
-  private let txService: BraveWalletEthTxService
+  private let txService: BraveWalletTxService
   private let blockchainRegistry: BraveWalletBlockchainRegistry
   private var allTokens: [BraveWallet.BlockchainToken] = []
   private var currentAccountAddress: String?
@@ -63,7 +63,7 @@ public class SendTokenStore: ObservableObject {
     keyringService: BraveWalletKeyringService,
     rpcService: BraveWalletJsonRpcService,
     walletService: BraveWalletBraveWalletService,
-    txService: BraveWalletEthTxService,
+    txService: BraveWalletTxService,
     blockchainRegistry: BraveWalletBlockchainRegistry,
     prefilledToken: BraveWallet.BlockchainToken?
   ) {
@@ -187,7 +187,10 @@ public class SendTokenStore: ObservableObject {
     completion: @escaping (_ success: Bool) -> Void
   ) {
     let eip1559Data = BraveWallet.TxData1559(baseData: baseData, chainId: chainId, maxPriorityFeePerGas: "", maxFeePerGas: "", gasEstimation: nil)
-    self.txService.addUnapproved1559Transaction(eip1559Data, from: address) { success, txMetaId, errorMessage in
+    
+    let txDataUnion = BraveWallet.TxDataUnion(ethTxData1559: eip1559Data)
+    
+    self.txService.addUnapprovedTransaction(txDataUnion, from: address) { success, txMetaId, errorMessage in
       completion(success)
     }
   }
@@ -227,36 +230,39 @@ public class SendTokenStore: ObservableObject {
 
       if token.symbol == network.symbol {
         let baseData = BraveWallet.TxData(nonce: "", gasPrice: "", gasLimit: "", to: self.sendAddress, value: "0x\(weiHexString)", data: .init())
+        let baseDataUnion = BraveWallet.TxDataUnion(ethTxData: baseData)
+        
         if network.isEip1559 {
           self.makeEIP1559Tx(chainId: network.chainId, baseData: baseData, from: fromAddress) { success in
             self.isMakingTx = false
             completion(success)
           }
         } else {
-          self.txService.addUnapprovedTransaction(baseData, from: fromAddress) { success, txMetaId, errorMessage in
+          
+          self.txService.addUnapprovedTransaction(baseDataUnion, from: fromAddress) { success, txMetaId, errorMessage in
             self.isMakingTx = false
             completion(success)
           }
         }
       } else {
-        self.txService.makeErc20TransferData(self.sendAddress, amount: "0x\(weiHexString)") { success, data in
-          guard success else {
-            completion(false)
-            return
-          }
-          let baseData = BraveWallet.TxData(nonce: "", gasPrice: "", gasLimit: "", to: token.contractAddress, value: "0x0", data: data)
-          if network.isEip1559 {
-            self.makeEIP1559Tx(chainId: network.chainId, baseData: baseData, from: fromAddress) { success in
-              self.isMakingTx = false
-              completion(success)
-            }
-          } else {
-            self.txService.addUnapprovedTransaction(baseData, from: fromAddress) { success, txMetaId, errorMessage in
-              self.isMakingTx = false 
-              completion(success)
-            }
-          }
-        }
+//        self.txService.makeErc20TransferData(self.sendAddress, amount: "0x\(weiHexString)") { success, data in
+//          guard success else {
+//            completion(false)
+//            return
+//          }
+//          let baseData = BraveWallet.TxData(nonce: "", gasPrice: "", gasLimit: "", to: token.contractAddress, value: "0x0", data: data)
+//          if network.isEip1559 {
+//            self.makeEIP1559Tx(chainId: network.chainId, baseData: baseData, from: fromAddress) { success in
+//              self.isMakingTx = false
+//              completion(success)
+//            }
+//          } else {
+//            self.txService.addUnapprovedTransaction(baseData, from: fromAddress) { success, txMetaId, errorMessage in
+//              self.isMakingTx = false 
+//              completion(success)
+//            }
+//          }
+//        }
       }
     }
   }
