@@ -160,14 +160,17 @@ struct PlaylistMoveFolderView: View {
                             }
                             
                             Text("\(firstItem.name ?? "") & \(selectedItems.count - 1) item(s)")
-                                .font(.body)
                                 .lineLimit(2)
+                                .font(.body)
                                 .foregroundColor(.white)
+                                .fixedSize(horizontal: false, vertical: true)
                         } else if let item = selectedItems.first {
                             PlaylistFolderImage(item: item)
                             Text(item.name ?? "")
+                                .lineLimit(2)
                                 .font(.body)
                                 .foregroundColor(.white)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                     }
                 }
