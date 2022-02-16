@@ -199,6 +199,10 @@ class PlaylistViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
+        if !PlaylistCarplayManager.shared.isCarPlayAvailable {
+            stopPlaying()
+        }
+        
         folderObserver = PlaylistManager.shared.onCurrentFolderDidChange
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in
@@ -416,6 +420,7 @@ extension PlaylistViewController: UIAdaptivePresentationControllerDelegate {
 // MARK: - UISplitViewControllerDelegate
 
 extension PlaylistViewController: UISplitViewControllerDelegate {
+    
     func splitViewControllerSupportedInterfaceOrientations(_ splitViewController: UISplitViewController) -> UIInterfaceOrientationMask {
         return .allButUpsideDown
     }
@@ -444,6 +449,14 @@ extension PlaylistViewController: UISplitViewControllerDelegate {
         
         return detailController.navigationController ?? detailController
     }
+    
+    func splitViewControllerDidCollapse(_ svc: UISplitViewController) {
+        print("Collapsed")
+    }
+    
+    func splitViewControllerDidExpand(_ svc: UISplitViewController) {
+        print("Expanded")
+    }
 }
 
 // MARK: - PlaylistViewControllerDelegate
@@ -464,7 +477,7 @@ extension PlaylistViewController: PlaylistViewControllerDelegate {
     }
     
     func onFullscreen() {
-        if !UIDevice.isIpad || splitViewController?.isCollapsed == true {
+        if !UIDevice.isIpad || splitController.isCollapsed {
             listController.onFullscreen()
         } else {
             detailController.onFullscreen()
@@ -472,7 +485,15 @@ extension PlaylistViewController: PlaylistViewControllerDelegate {
     }
     
     func onExitFullscreen() {
-        listController.onExitFullscreen()
+        if !UIDevice.isIpad || splitController.isCollapsed {
+            listController.onExitFullscreen()
+        } else {
+            if playerView.isFullscreen {
+                detailController.onExitFullscreen()
+            } else {
+                dismiss(animated: true, completion: nil)
+            }
+        }
     }
     
     func stopPlaying() {

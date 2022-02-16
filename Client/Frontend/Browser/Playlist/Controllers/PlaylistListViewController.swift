@@ -132,17 +132,17 @@ class PlaylistListViewController: UIViewController {
                 UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
             ]
         }
+        
+        // Update
+        DispatchQueue.main.async {
+            self.fetchResults()
+        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
         title = PlaylistManager.shared.currentFolder?.title
-        
-        // Update
-        DispatchQueue.main.async {
-            self.fetchResults()
-        }
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -153,7 +153,11 @@ class PlaylistListViewController: UIViewController {
             .sink { [weak self] in
                 guard let self = self else { return }
                 self.title = PlaylistManager.shared.currentFolder?.title
-                self.tableView.reloadData()
+                
+                // Update
+                DispatchQueue.main.async {
+                    self.fetchResults()
+                }
         }
     }
     
@@ -162,7 +166,6 @@ class PlaylistListViewController: UIViewController {
         
         folderObserver = nil
         onCancelEditingItems()
-        delegate?.stopPlaying()
     }
     
     // MARK: Internal
