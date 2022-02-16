@@ -10,6 +10,7 @@ import CoreData
 
 private struct PlaylistFolderImage: View {
     static let cornerRadius = 10.0
+    private static let favIconSize = 16.0
     private var thumbnailLoader: ImageLoader
     private var favIconLoader: ImageLoader
     
@@ -24,11 +25,10 @@ private struct PlaylistFolderImage: View {
     }
     
     var body: some View {
-        ZStack(alignment: .leading) {
+        ZStack(alignment: .topLeading) {
             Image(uiImage: thumbnail)
                 .resizable()
                 .background(Color.black)
-                .frame(maxWidth: (UIScreen.main.bounds.width / 2.0) - 12.0, minHeight: 100.0, maxHeight: 100.0)
                 .clipShape(RoundedRectangle(cornerRadius: PlaylistFolderImage.cornerRadius, style: .continuous))
                 .overlay(tint.opacity(0.25))
             
@@ -36,7 +36,8 @@ private struct PlaylistFolderImage: View {
                 Image(uiImage: favIcon)
                     .resizable()
                     .aspectRatio(1.0, contentMode: .fit)
-                    .frame(width: 16.0, height: 16.0)
+                    .frame(width: PlaylistFolderImage.favIconSize,
+                           height: PlaylistFolderImage.favIconSize)
                     .clipShape(RoundedRectangle(cornerRadius: 2.5, style: .continuous))
                 
                 Spacer()
@@ -45,8 +46,12 @@ private struct PlaylistFolderImage: View {
                     .font(.callout.weight(.medium))
                     .lineLimit(2)
                     .foregroundColor(.white)
-            }.padding(8.0)
+            }
+            .padding(8.0)
         }
+        .frame(maxWidth: (UIScreen.main.bounds.width / 2.0) - 12.0,
+               minHeight: 100.0,
+               maxHeight: 100.0)
         .onReceive(thumbnailLoader.$image) {
             self.thumbnail = $0 ?? UIImage()
         }
@@ -122,7 +127,9 @@ struct PlaylistNewFolderView: View {
                 Section {
                     TextField("Untitled Folder", text: $folderName)
                         .disableAutocorrection(true)
-                        .frame(minWidth: 0.0, maxWidth: .infinity, minHeight: 44.0, maxHeight: 44.0)
+                        .frame(maxWidth: .infinity,
+                               minHeight: 44.0,
+                               maxHeight: 44.0)
                 }
                 .listRowBackground(Color(.secondaryBraveGroupedBackground))
                 
@@ -140,11 +147,9 @@ struct PlaylistNewFolderView: View {
                                         .foregroundColor(Color(.secondaryBraveLabel))
                                         .multilineTextAlignment(.leading)
                                 }
-                                
-                                Spacer()
                             }
                             
-                            LazyVGrid(columns: gridItems, spacing: 12.0) {
+                            LazyVGrid(columns: gridItems, alignment: .leading, spacing: 12.0) {
                                 ForEach((0..<items.count), id: \.self) { index in
                                     PlaylistFolderImage(item: items[index])
                                         .overlay(
