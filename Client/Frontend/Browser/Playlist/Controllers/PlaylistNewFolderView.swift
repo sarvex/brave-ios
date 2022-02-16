@@ -28,7 +28,7 @@ private struct PlaylistFolderImage: View {
             Image(uiImage: thumbnail)
                 .resizable()
                 .background(Color.black)
-                .frame(maxWidth: (UIScreen.main.bounds.width / 2.0) - 12.0, minHeight: 100.0, maxHeight: 100.0, alignment: .center)
+                .frame(maxWidth: (UIScreen.main.bounds.width / 2.0) - 12.0, minHeight: 100.0, maxHeight: 100.0)
                 .clipShape(RoundedRectangle(cornerRadius: PlaylistFolderImage.cornerRadius, style: .continuous))
                 .overlay(tint.opacity(0.25))
             
@@ -36,7 +36,7 @@ private struct PlaylistFolderImage: View {
                 Image(uiImage: favIcon)
                     .resizable()
                     .aspectRatio(1.0, contentMode: .fit)
-                    .frame(width: 16.0, height: 16.0, alignment: .center)
+                    .frame(width: 16.0, height: 16.0)
                     .clipShape(RoundedRectangle(cornerRadius: 2.5, style: .continuous))
                 
                 Spacer()
@@ -57,7 +57,7 @@ private struct PlaylistFolderImage: View {
     
     private var tint: some View {
         EmptyView()
-        .frame(minWidth: 0.0, maxWidth: .infinity, minHeight: 0.0, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.black)
         .clipShape(RoundedRectangle(cornerRadius: PlaylistFolderImage.cornerRadius, style: .continuous))
     }
@@ -122,14 +122,14 @@ struct PlaylistNewFolderView: View {
                 Section {
                     TextField("Untitled Folder", text: $folderName)
                         .disableAutocorrection(true)
-                        .frame(minWidth: 0.0, maxWidth: .infinity, minHeight: 44.0, maxHeight: 44.0, alignment: .center)
+                        .frame(minWidth: 0.0, maxWidth: .infinity, minHeight: 44.0, maxHeight: 44.0)
                 }
                 .listRowBackground(Color(.secondaryBraveGroupedBackground))
                 
                 if !items.isEmpty {
                     Section {
-                        VStack {
-                            HStack(alignment: .center) {
+                        VStack(alignment: .leading) {
+                            HStack {
                                 VStack(alignment: .leading, spacing: 5.0) {
                                     Text("Add videos to this folder")
                                         .font(.callout.weight(.medium))

@@ -58,11 +58,13 @@ class PlaylistFolderController: UIViewController {
         view.addSubview(tableView)
         view.addSubview(toolbar)
         tableView.snp.makeConstraints {
-            $0.leading.trailing.top.equalTo(view.safeAreaLayoutGuide)
+            $0.leading.trailing.equalToSuperview()
+            $0.top.equalTo(view.safeAreaLayoutGuide)
         }
         
         toolbar.snp.makeConstraints {
-            $0.leading.trailing.bottom.equalTo(view.safeAreaLayoutGuide)
+            $0.leading.trailing.equalToSuperview()
+            $0.bottom.equalTo(view.safeAreaLayoutGuide)
             $0.top.equalTo(tableView.snp.bottom)
         }
         
