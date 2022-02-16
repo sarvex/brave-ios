@@ -68,6 +68,7 @@ final public class PlaylistItem: NSManagedObject, CRUD {
             playlistItem.mimeType = item.mimeType
             playlistItem.mediaSrc = item.src
             playlistItem.order = -9999
+            playlistItem.playlistFolder = PlaylistFolder.getFolder(uuid: PlaylistFolder.savedFolderUUID, context: context)
             
             PlaylistItem.saveContext(context)
             PlaylistItem.reorderItems(context: context)

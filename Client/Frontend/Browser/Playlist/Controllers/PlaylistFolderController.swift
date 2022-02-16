@@ -212,35 +212,49 @@ extension PlaylistFolderController: UITableViewDelegate {
             return nil
         }
         
+        func deleteFolder(folder: PlaylistFolder) {
+            if PlaylistManager.shared.currentFolder?.objectID == folder.objectID {
+                PlaylistManager.shared.currentFolder = nil
+            }
+            
+            folder.playlistItems?.forEach({
+                PlaylistManager.shared.delete(item: PlaylistInfo(item: $0))
+            })
+            
+            if folder.uuid != PlaylistFolder.savedFolderUUID {
+                PlaylistFolder.removeFolder(folder)
+            }
+            
+            do {
+                try self.othersFRC.performFetch()
+            } catch {
+                print("Error: \(error)")
+            }
+            
+            if PlaylistManager.shared.currentFolder?.isDeleted == true {
+                PlaylistManager.shared.currentFolder = nil
+            }
+            
+            tableView.reloadData()
+        }
+        
         let deleteAction = UIContextualAction(style: .normal, title: nil, handler: { [weak self] (action, view, completionHandler) in
             guard let self = self else { return }
             
             switch section {
             case .savedItems:
-                break
+                guard let folder = self.savedFolder else {
+                    completionHandler(false)
+                    return
+                }
+                deleteFolder(folder: folder)
+                
             case .folders:
                 guard let folder = self.othersFRC.fetchedObjects?[safe: indexPath.row] else {
                     completionHandler(false)
                     return
                 }
-                
-                if PlaylistManager.shared.currentFolder?.objectID == folder.objectID {
-                    PlaylistManager.shared.currentFolder = nil
-                }
-                
-                PlaylistFolder.removeFolder(folder)
-                
-                do {
-                    try self.othersFRC.performFetch()
-                } catch {
-                    print("Error: \(error)")
-                }
-                
-                if PlaylistManager.shared.currentFolder?.isDeleted == true {
-                    PlaylistManager.shared.currentFolder = nil
-                }
-                
-                tableView.reloadData()
+                deleteFolder(folder: folder)
             }
             
             completionHandler(true)
