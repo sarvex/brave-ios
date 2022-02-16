@@ -148,7 +148,7 @@ struct PlaylistMoveFolderView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section {
+                Section(header: {
                     HStack(spacing: 18.0) {
                         if selectedItems.count > 1,
                            let firstItem = selectedItems[safe: 0],
@@ -163,6 +163,7 @@ struct PlaylistMoveFolderView: View {
                                 .lineLimit(2)
                                 .font(.body)
                                 .foregroundColor(.white)
+                                .textCase(.none)
                                 .fixedSize(horizontal: false, vertical: true)
                         } else if let item = selectedItems.first {
                             PlaylistFolderImage(item: item)
@@ -170,15 +171,17 @@ struct PlaylistMoveFolderView: View {
                                 .lineLimit(2)
                                 .font(.body)
                                 .foregroundColor(.white)
-                                .fixedSize(horizontal: false, vertical: true)
+                                .textCase(.none)
                         }
                     }
-                }
+                    .padding(.top, 20.0)
+                }()) {}
                 .listRowInsets(.zero)
                 .listRowBackground(Color.clear)
                 
                 Section(header: Text("Current Folder")
                             .font(.footnote)
+                            .textCase(.none)
                             .foregroundColor(Color(.secondaryBraveLabel))
                             .multilineTextAlignment(.leading)) {
                     
@@ -196,6 +199,7 @@ struct PlaylistMoveFolderView: View {
                 
                 Section(header: Text("Select a folder to move \(selectedItems.count) item(s) to")
                             .font(.footnote)
+                            .textCase(.none)
                             .foregroundColor(Color(.secondaryBraveLabel))
                             .multilineTextAlignment(.leading)) {
                     
