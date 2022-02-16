@@ -160,6 +160,8 @@ extension PlaylistFolderController: UITableViewDelegate {
             guard let self = self else { return }
             self.presentedViewController?.dismiss(animated: true, completion: nil)
             
+            let folderTitle = folderTitle.isEmpty ? "Untitled Folder" : folderTitle
+            
             PlaylistFolder.addFolder(title: folderTitle) { uuid in
                 PlaylistItem.moveItems(items: selectedItems, to: uuid)
                 

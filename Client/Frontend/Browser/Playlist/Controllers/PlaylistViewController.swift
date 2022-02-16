@@ -27,6 +27,7 @@ protocol PlaylistViewControllerDelegate: AnyObject {
     func onFullscreen()
     func onExitFullscreen()
     func playItem(item: PlaylistInfo, completion: ((PlaylistMediaStreamer.PlaybackError) -> Void)?)
+    func stopPlaying()
     func deleteItem(item: PlaylistInfo, at index: Int)
     func updateLastPlayedItem(item: PlaylistInfo)
     func displayLoadingResourceError()
@@ -102,6 +103,10 @@ class PlaylistViewController: UIViewController {
             stop(playerView)
             PlaylistCarplayManager.shared.currentPlaylistItem = nil
             PlaylistCarplayManager.shared.currentlyPlayingItemIndex = -1
+            
+            // Destroy folder observers
+            folderObserver = nil
+            PlaylistManager.shared.currentFolder = nil
         }
         
         // Cancel all loading.
@@ -141,11 +146,11 @@ class PlaylistViewController: UIViewController {
             $0.minimumPrimaryColumnWidth = 400
         }
         
-        if let url = Preferences.Playlist.lastPlayedItemUrl.value,
-           let item = PlaylistItem.getItem(pageSrc: url) {
+        if let initialItem = listController.initialItem,
+           let item = PlaylistItem.getItem(pageSrc: initialItem.pageSrc) {
             PlaylistManager.shared.currentFolder = item.playlistFolder
-        } else if let initialItem = listController.initialItem,
-                  let item = PlaylistItem.getItem(pageSrc: initialItem.pageSrc) {
+        } else if let url = Preferences.Playlist.lastPlayedItemUrl.value,
+                  let item = PlaylistItem.getItem(pageSrc: url) {
             PlaylistManager.shared.currentFolder = item.playlistFolder
         } else {
             PlaylistManager.shared.currentFolder = nil
@@ -470,19 +475,23 @@ extension PlaylistViewController: PlaylistViewControllerDelegate {
         listController.onExitFullscreen()
     }
     
+    func stopPlaying() {
+        PlaylistMediaStreamer.clearNowPlayingInfo()
+        
+        PlaylistCarplayManager.shared.currentlyPlayingItemIndex = -1
+        playerView.resetVideoInfo()
+        stop(playerView)
+        
+        // Cancel all loading.
+        assetLoadingStateObservers.removeAll()
+        assetStateObservers.removeAll()
+    }
+    
     func deleteItem(item: PlaylistInfo, at index: Int) {
         PlaylistManager.shared.delete(item: item)
         
         if PlaylistCarplayManager.shared.currentlyPlayingItemIndex == index || PlaylistManager.shared.numberOfAssets == 0 {
-            PlaylistMediaStreamer.clearNowPlayingInfo()
-            
-            PlaylistCarplayManager.shared.currentlyPlayingItemIndex = -1
-            playerView.resetVideoInfo()
-            stop(playerView)
-            
-            // Cancel all loading.
-            assetLoadingStateObservers.removeAll()
-            assetStateObservers.removeAll()
+            stopPlaying()
         }
     }
     

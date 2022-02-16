@@ -145,6 +145,7 @@ class Migration {
     }
     
     private static func movePlaylistV2Items() {
+        // Migrate all items not belonging to a folder
         func migrateItemsToSavedFolder(folderUUID: String) {
             let frc = PlaylistItem.frc(parentFolder: nil)
             do {

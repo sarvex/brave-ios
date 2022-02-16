@@ -56,6 +56,20 @@ final public class PlaylistItem: NSManagedObject, CRUD {
                                           sectionNameKeyPath: nil, cacheName: nil)
     }
     
+    public class func allFoldersFRC() -> NSFetchedResultsController<PlaylistItem> {
+        let context = DataController.viewContext
+        let fetchRequest = NSFetchRequest<PlaylistItem>()
+        fetchRequest.entity = PlaylistItem.entity(context)
+        fetchRequest.fetchBatchSize = 20
+        
+        let orderSort = NSSortDescriptor(key: "order", ascending: true)
+        let createdSort = NSSortDescriptor(key: "dateAdded", ascending: false)
+        fetchRequest.sortDescriptors = [orderSort, createdSort]
+        
+        return NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: context,
+                                          sectionNameKeyPath: nil, cacheName: nil)
+    }
+    
     public static func addItem(_ item: PlaylistInfo, cachedData: Data?, completion: (() -> Void)? = nil) {
         DataController.perform(context: .new(inMemory: false), save: false) { context in
             let playlistItem = PlaylistItem(context: context)

@@ -183,6 +183,7 @@ extension PlaylistListViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if tableView.isEditing {
+            updateToolbar(editing: true)
             return
         }
         
@@ -220,6 +221,12 @@ extension PlaylistListViewController: UITableViewDelegate {
                     log.debug("User cancelled Playlist Playback")
                 }
             }
+        }
+    }
+    
+    func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
+        if tableView.isEditing {
+            updateToolbar(editing: true)
         }
     }
 }

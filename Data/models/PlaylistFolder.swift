@@ -63,8 +63,12 @@ final public class PlaylistFolder: NSManagedObject, CRUD {
         }
     }
     
+    public static func getOtherFoldersCount(context: NSManagedObjectContext? = nil) -> Int {
+        PlaylistFolder.count(predicate: NSPredicate(format: "uuid != %@", PlaylistFolder.savedFolderUUID), context: context ?? DataController.viewContext) ?? 0
+    }
+    
     public static func getFolder(uuid: String, context: NSManagedObjectContext? = nil) -> PlaylistFolder? {
-        return PlaylistFolder.first(where: NSPredicate(format: "uuid == %@", uuid), context: context ?? DataController.viewContext)
+        PlaylistFolder.first(where: NSPredicate(format: "uuid == %@", uuid), context: context ?? DataController.viewContext)
     }
     
     public static func removeFolder(_ uuid: String) {

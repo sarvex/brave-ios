@@ -126,42 +126,44 @@ struct PlaylistNewFolderView: View {
                 }
                 .listRowBackground(Color(.secondaryBraveGroupedBackground))
                 
-                Section {
-                    VStack {
-                        HStack(alignment: .center) {
-                            VStack(alignment: .leading, spacing: 5.0) {
-                                Text("Add videos to this folder")
-                                    .font(.callout.weight(.medium))
-                                    .foregroundColor(.white)
-                                    .multilineTextAlignment(.leading)
-                                Text("Tap to select videos")
-                                    .font(.footnote)
-                                    .foregroundColor(Color(.secondaryBraveLabel))
-                                    .multilineTextAlignment(.leading)
+                if !items.isEmpty {
+                    Section {
+                        VStack {
+                            HStack(alignment: .center) {
+                                VStack(alignment: .leading, spacing: 5.0) {
+                                    Text("Add videos to this folder")
+                                        .font(.callout.weight(.medium))
+                                        .foregroundColor(.white)
+                                        .multilineTextAlignment(.leading)
+                                    Text("Tap to select videos")
+                                        .font(.footnote)
+                                        .foregroundColor(Color(.secondaryBraveLabel))
+                                        .multilineTextAlignment(.leading)
+                                }
+                                
+                                Spacer()
                             }
                             
-                            Spacer()
-                        }
-                        
-                        LazyVGrid(columns: gridItems, spacing: 12.0) {
-                            ForEach((0..<items.count), id: \.self) { index in
-                                PlaylistFolderImage(item: items[index])
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: PlaylistFolderImage.cornerRadius, style: .continuous)
-                                            .stroke(Color.blue, lineWidth: selected.contains(items[index].objectID) ? 2.0 : 0.0)
-                                    )
-                                    .onTapGesture {
-                                    if let index = selected.firstIndex(of: items[index].objectID) {
-                                        selected.remove(at: index)
-                                    } else {
-                                        selected.append(items[index].objectID)
+                            LazyVGrid(columns: gridItems, spacing: 12.0) {
+                                ForEach((0..<items.count), id: \.self) { index in
+                                    PlaylistFolderImage(item: items[index])
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: PlaylistFolderImage.cornerRadius, style: .continuous)
+                                                .stroke(Color.blue, lineWidth: selected.contains(items[index].objectID) ? 2.0 : 0.0)
+                                        )
+                                        .onTapGesture {
+                                        if let index = selected.firstIndex(of: items[index].objectID) {
+                                            selected.remove(at: index)
+                                        } else {
+                                            selected.append(items[index].objectID)
+                                        }
                                     }
                                 }
                             }
                         }
+                        .listRowInsets(.zero)
+                        .listRowBackground(Color(.braveGroupedBackground))
                     }
-                    .listRowInsets(.zero)
-                    .listRowBackground(Color(.braveGroupedBackground))
                 }
             }
             .listStyle(.insetGrouped)

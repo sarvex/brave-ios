@@ -51,7 +51,15 @@ class PlaylistManager: NSObject {
     var currentFolder: PlaylistFolder? {
         didSet {
             frc.delegate = nil
-            frc = PlaylistItem.frc(parentFolder: currentFolder)
+            
+            if let currentFolder = currentFolder {
+                // Only return an FRC for the specified folder
+                frc = PlaylistItem.frc(parentFolder: currentFolder)
+            } else {
+                // Return every folder, including the "Saved" folder
+                frc = PlaylistItem.allFoldersFRC()
+            }
+            
             frc.delegate = self
             reloadData()
             

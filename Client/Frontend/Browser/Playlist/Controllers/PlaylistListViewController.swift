@@ -128,7 +128,7 @@ class PlaylistListViewController: UIViewController {
         
         toolbar.do {
             $0.items = [
-                UIBarButtonItem(title: "Edit", style: .done, target: self, action: #selector(onEditItems(_:))),
+                UIBarButtonItem(title: "Edit", style: .done, target: self, action: #selector(onEditItems)),
                 UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
             ]
         }
@@ -161,6 +161,8 @@ class PlaylistListViewController: UIViewController {
         super.viewWillDisappear(animated)
         
         folderObserver = nil
+        onCancelEditingItems()
+        delegate?.stopPlaying()
     }
     
     // MARK: Internal
@@ -287,46 +289,64 @@ class PlaylistListViewController: UIViewController {
     
     // MARK: Actions
     
+    func updateToolbar(editing: Bool) {
+        if editing {
+            toolbar.do {
+                $0.items = [
+                    UIBarButtonItem(title: "Cancel", style: .done, target: self, action: #selector(onCancelEditingItems)),
+                    UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
+                    UIBarButtonItem(title: "Move", style: .done, target: self, action: #selector(onMoveEditingItems)).then {
+                        $0.isEnabled = !(tableView.indexPathsForSelectedRows?.isEmpty ?? true) && PlaylistFolder.getOtherFoldersCount() > 0
+                    },
+                    UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
+                    UIBarButtonItem(title: "Delete", style: .done, target: self, action: #selector(onDeleteEditingItems))
+                ]
+            }
+        } else {
+            toolbar.do {
+                $0.items = [
+                    UIBarButtonItem(title: "Edit", style: .done, target: self, action: #selector(onEditItems)),
+                    UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+                ]
+            }
+        }
+    }
+    
     @objc
     private func onExit(_ button: UIBarButtonItem) {
         dismiss(animated: true, completion: nil)
     }
     
     @objc
-    private func onEditItems(_ button: UIBarButtonItem) {
-        tableView.setEditing(true, animated: true)
-        toolbar.do {
-            $0.items = [
-                UIBarButtonItem(title: "Cancel", style: .done, target: self, action: #selector(onCancelEditingItems(_:))),
-                UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
-                UIBarButtonItem(title: "Move", style: .done, target: self, action: #selector(onMoveEditingItems(_:))),
-                UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
-                UIBarButtonItem(title: "Delete", style: .done, target: self, action: #selector(onDeleteEditingItems(_:)))
-            ]
+    private func onEditItems() {
+        if tableView.isEditing {
+            // If already editing, such as when swiping on a cell,
+            // dismiss the trailing swipe and show the selections instead.
+            tableView.setEditing(false, animated: false)
+            tableView.setEditing(true, animated: false)
+        } else {
+            tableView.setEditing(true, animated: true)
         }
-    }
-    
-    @objc
-    private func onCancelEditingItems(_ button: UIBarButtonItem) {
-        tableView.setEditing(false, animated: true)
-        toolbar.do {
-            $0.items = [
-                UIBarButtonItem(title: "Edit", style: .done, target: self, action: #selector(onEditItems(_:))),
-                UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
-            ]
-        }
-    }
-    
-    @objc
-    private func onMoveEditingItems(_ button: UIBarButtonItem) {
-        let selection = tableView.indexPathsForSelectedRows ?? []
-        onCancelEditingItems(button)
         
-        let items = selection.compactMap({
+        updateToolbar(editing: true)
+    }
+    
+    @objc
+    private func onCancelEditingItems() {
+        tableView.setEditing(false, animated: true)
+        updateToolbar(editing: false)
+    }
+    
+    @objc
+    private func onMoveEditingItems() {
+        let selection = tableView.indexPathsForSelectedRows ?? []
+        onCancelEditingItems()
+        
+        let selectedItems = selection.compactMap({
             PlaylistManager.shared.fetchedObjects[safe: $0.row]
         })
         
-        var moveController = PlaylistMoveFolderView(selectedItems: items)
+        var moveController = PlaylistMoveFolderView(selectedItems: selectedItems)
         moveController.onCancelButtonPressed = { [weak self] in
             self?.presentedViewController?.dismiss(animated: true, completion: nil)
         }
@@ -334,6 +354,16 @@ class PlaylistListViewController: UIViewController {
         moveController.onDoneButtonPressed = { [weak self] items, folder in
             guard let self = self else { return }
             self.presentedViewController?.dismiss(animated: true, completion: nil)
+            
+            // We moved an item that was playing
+            if items.firstIndex(where: { PlaylistInfo(item: $0).pageSrc == PlaylistCarplayManager.shared.currentPlaylistItem?.pageSrc }) != nil {
+                self.delegate?.stopPlaying()
+            }
+            
+            // We moved all items in this folder
+            if items.count == selectedItems.count {
+                self.navigationController?.popViewController(animated: true)
+            }
             
             PlaylistItem.moveItems(items: items.map({ $0.objectID }), to: folder?.uuid)
         }
@@ -344,9 +374,9 @@ class PlaylistListViewController: UIViewController {
     }
     
     @objc
-    private func onDeleteEditingItems(_ button: UIBarButtonItem) {
+    private func onDeleteEditingItems() {
         let selection = tableView.indexPathsForSelectedRows ?? []
-        onCancelEditingItems(button)
+        onCancelEditingItems()
         
         let rows = selection.map({
             (index: $0.row, item: PlaylistManager.shared.itemAtIndex($0.row))
