@@ -10,6 +10,7 @@ import CoreData
 
 private struct PlaylistFolderImage: View {
     static let cornerRadius = 5.0
+    private static let favIconSize = 16.0
     private var thumbnailLoader: ImageLoader
     private var favIconLoader: ImageLoader
     
@@ -22,20 +23,23 @@ private struct PlaylistFolderImage: View {
     }
     
     var body: some View {
-        ZStack(alignment: .leading) {
+        ZStack(alignment: .topLeading) {
             Image(uiImage: thumbnail)
                 .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 100.0, height: 60.0)
                 .background(Color.black)
-                .frame(maxWidth: 100.0, minHeight: 60.0, maxHeight: 60.0, alignment: .center)
                 .clipShape(RoundedRectangle(cornerRadius: PlaylistFolderImage.cornerRadius, style: .continuous))
             
             Image(uiImage: favIcon)
                 .resizable()
                 .aspectRatio(1.0, contentMode: .fit)
-                .frame(width: 16.0, height: 16.0, alignment: .center)
+                .frame(width: PlaylistFolderImage.favIconSize,
+                       height: PlaylistFolderImage.favIconSize)
                 .clipShape(RoundedRectangle(cornerRadius: 2.5, style: .continuous))
                 .padding(8.0)
         }
+        .frame(width: 100.0, height: 60.0)
         .onReceive(thumbnailLoader.$image) {
             self.thumbnail = $0 ?? UIImage()
         }
@@ -86,7 +90,7 @@ private struct PlaylistFolderView: View {
     @Binding var selectedFolder: PlaylistFolder?
     
     var body: some View {
-        HStack(alignment: .center, spacing: 18.0) {
+        HStack(spacing: 18.0) {
             Image(systemName: "folder")
                 .renderingMode(.template)
                 .aspectRatio(contentMode: .fit)
@@ -145,11 +149,11 @@ struct PlaylistMoveFolderView: View {
         NavigationView {
             Form {
                 Section {
-                    HStack {
+                    HStack(spacing: 18.0) {
                         if selectedItems.count > 1,
                            let firstItem = selectedItems[safe: 0],
                            let secondItem = selectedItems[safe: 1] {
-                            ZStack {
+                            ZStack(alignment: .topLeading) {
                                 PlaylistFolderImage(item: firstItem)
                                     .rotationEffect(.degrees(5.0))
                                 PlaylistFolderImage(item: secondItem).rotationEffect(.degrees(-5.0))
@@ -157,6 +161,7 @@ struct PlaylistMoveFolderView: View {
                             
                             Text("\(firstItem.name ?? "") & \(selectedItems.count - 1) item(s)")
                                 .font(.body)
+                                .lineLimit(2)
                                 .foregroundColor(.white)
                         } else if let item = selectedItems.first {
                             PlaylistFolderImage(item: item)
@@ -166,6 +171,7 @@ struct PlaylistMoveFolderView: View {
                         }
                     }
                 }
+                .listRowInsets(.zero)
                 .listRowBackground(Color.clear)
                 
                 Section(header: Text("Current Folder")
@@ -185,7 +191,7 @@ struct PlaylistMoveFolderView: View {
                 }
                 .listRowBackground(Color(.secondaryBraveGroupedBackground))
                 
-                Section(header: Text("Select a folder to move \(selectedItems.count) item to")
+                Section(header: Text("Select a folder to move \(selectedItems.count) item(s) to")
                             .font(.footnote)
                             .foregroundColor(Color(.secondaryBraveLabel))
                             .multilineTextAlignment(.leading)) {

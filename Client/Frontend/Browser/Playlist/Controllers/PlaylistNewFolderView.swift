@@ -28,6 +28,7 @@ private struct PlaylistFolderImage: View {
         ZStack(alignment: .topLeading) {
             Image(uiImage: thumbnail)
                 .resizable()
+                .aspectRatio(contentMode: .fit)
                 .background(Color.black)
                 .clipShape(RoundedRectangle(cornerRadius: PlaylistFolderImage.cornerRadius, style: .continuous))
                 .overlay(tint.opacity(0.25))
