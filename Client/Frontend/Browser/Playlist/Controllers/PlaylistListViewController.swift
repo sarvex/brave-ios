@@ -132,17 +132,17 @@ class PlaylistListViewController: UIViewController {
                 UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
             ]
         }
-        
-        // Update
-        DispatchQueue.main.async {
-            self.fetchResults()
-        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
         title = PlaylistManager.shared.currentFolder?.title
+        
+        // Update
+        DispatchQueue.main.async {
+            self.fetchResults()
+        }
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -153,11 +153,6 @@ class PlaylistListViewController: UIViewController {
             .sink { [weak self] in
                 guard let self = self else { return }
                 self.title = PlaylistManager.shared.currentFolder?.title
-                
-                // Update
-                DispatchQueue.main.async {
-                    self.fetchResults()
-                }
         }
     }
     
@@ -166,6 +161,10 @@ class PlaylistListViewController: UIViewController {
         
         folderObserver = nil
         onCancelEditingItems()
+        
+        if isMovingFromParent || isBeingDismissed {
+            delegate?.stopPlaying()
+        }
     }
     
     // MARK: Internal
@@ -216,6 +215,12 @@ class PlaylistListViewController: UIViewController {
             
             tableView.delegate?.tableView?(tableView, didSelectRowAt: IndexPath(row: 0, section: 0))
             autoPlayEnabled = true
+            return
+        }
+        
+        // If the current item is already playing, do nothing.
+        if let currentItemSrc = PlaylistCarplayManager.shared.currentPlaylistItem?.pageSrc,
+           PlaylistManager.shared.index(of: currentItemSrc) != nil {
             return
         }
         
@@ -371,7 +376,10 @@ class PlaylistListViewController: UIViewController {
             PlaylistItem.moveItems(items: items.map({ $0.objectID }), to: folder?.uuid)
         }
         
-        let hostingController = UIHostingController(rootView: moveController.environment(\.managedObjectContext, DataController.swiftUIContext))
+        let hostingController = UIHostingController(rootView: moveController.environment(\.managedObjectContext, DataController.swiftUIContext)).then {
+            $0.modalPresentationStyle = .currentContext
+            $0.modalTransitionStyle = UIDevice.isIpad ? .crossDissolve : .coverVertical
+        }
         
         present(hostingController, animated: true, completion: nil)
     }

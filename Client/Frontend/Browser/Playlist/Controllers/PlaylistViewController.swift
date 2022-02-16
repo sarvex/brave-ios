@@ -199,10 +199,6 @@ class PlaylistViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
-        if !PlaylistCarplayManager.shared.isCarPlayAvailable {
-            stopPlaying()
-        }
-        
         folderObserver = PlaylistManager.shared.onCurrentFolderDidChange
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in
@@ -500,6 +496,7 @@ extension PlaylistViewController: PlaylistViewControllerDelegate {
         PlaylistMediaStreamer.clearNowPlayingInfo()
         
         PlaylistCarplayManager.shared.currentlyPlayingItemIndex = -1
+        PlaylistCarplayManager.shared.currentPlaylistItem = nil
         playerView.resetVideoInfo()
         stop(playerView)
         

@@ -177,8 +177,12 @@ extension PlaylistFolderController: UITableViewDelegate {
             }
         }
 
-        present(UIHostingController(rootView: playlistFolder.environment(\.managedObjectContext, DataController.swiftUIContext)),
-                animated: true, completion: nil)
+        let hostingController = UIHostingController(rootView: playlistFolder.environment(\.managedObjectContext, DataController.swiftUIContext)).then {
+            $0.modalPresentationStyle = .currentContext
+            $0.modalTransitionStyle = UIDevice.isIpad ? .crossDissolve : .coverVertical
+        }
+        
+        present(hostingController, animated: true, completion: nil)
     }
     
     func tableView(_ tableView: UITableView, willSelectRowAt indexPath: IndexPath) -> IndexPath? {

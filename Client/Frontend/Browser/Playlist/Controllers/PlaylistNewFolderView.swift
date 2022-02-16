@@ -169,6 +169,7 @@ struct PlaylistNewFolderView: View {
             .listStyle(.insetGrouped)
             .navigationTitle("New Folder")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationViewStyle(.stack)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") { onCancelButtonPressed?() }

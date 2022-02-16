@@ -223,6 +223,7 @@ struct PlaylistMoveFolderView: View {
             .listStyle(.insetGrouped)
             .navigationTitle("Move")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationViewStyle(.stack)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") { onCancelButtonPressed?() }
