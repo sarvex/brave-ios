@@ -185,7 +185,7 @@ struct PlaylistMoveFolderView: View {
                 }
                 .listRowBackground(Color(.secondaryBraveGroupedBackground))
                 
-                Section(header: Text("Select a folder to move 1 item to")
+                Section(header: Text("Select a folder to move \(selectedItems.count) item to")
                             .font(.footnote)
                             .foregroundColor(Color(.secondaryBraveLabel))
                             .multilineTextAlignment(.leading)) {
