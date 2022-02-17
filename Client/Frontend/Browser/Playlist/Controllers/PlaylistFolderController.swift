@@ -19,6 +19,7 @@ private enum Section: Int, CaseIterable {
 }
 
 class PlaylistFolderController: UIViewController {
+    private let cellIdentifier = "PlaylistCell"
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
     private let savedFolder = PlaylistFolder.getFolder(uuid: PlaylistFolder.savedFolderUUID)
     private let othersFRC = PlaylistFolder.frc(savedFolder: false)
@@ -69,7 +70,6 @@ class PlaylistFolderController: UIViewController {
         }
         
         tableView.do {
-            $0.register(PlaylistFolderCell.self)
             $0.dataSource = self
             $0.delegate = self
             $0.dragDelegate = self
@@ -124,25 +124,37 @@ extension PlaylistFolderController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(for: indexPath) as PlaylistFolderCell
-        guard let section = Section(rawValue: indexPath.section) else {
-            return cell
-        }
-        
-        switch section {
-        case .savedItems:
-            cell.titleLabel.text = "Saved"
-            cell.subtitleLabel.text = "\(savedFolder?.playlistItems?.count ?? 0) Items"
-        case .folders:
-            guard let folder = othersFRC.fetchedObjects?[safe: indexPath.row] else {
-                return cell
-            }
-            
-            cell.titleLabel.text = folder.title
-            cell.subtitleLabel.text = "\(folder.playlistItems?.count ?? 0) Items"
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier) else {
+            return UITableViewCell(style: .subtitle, reuseIdentifier: cellIdentifier)
         }
         
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        
+        guard let section = Section(rawValue: indexPath.section) else {
+            return
+        }
+        
+        let folderIcon = UIImage(systemName: "folder")?.withRenderingMode(.alwaysTemplate)
+        
+        switch section {
+        case .savedItems:
+            cell.imageView?.image = folderIcon
+            cell.textLabel?.text = "Saved"
+            cell.detailTextLabel?.text = "\(savedFolder?.playlistItems?.count ?? 0) Items"
+            cell.accessoryType = .disclosureIndicator
+        case .folders:
+            guard let folder = othersFRC.fetchedObjects?[safe: indexPath.row] else {
+                return
+            }
+            
+            cell.imageView?.image = folderIcon
+            cell.textLabel?.text = folder.title
+            cell.detailTextLabel?.text = "\(folder.playlistItems?.count ?? 0) Items"
+            cell.accessoryType = .disclosureIndicator
+        }
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
@@ -187,20 +199,6 @@ extension PlaylistFolderController: UITableViewDelegate {
         present(hostingController, animated: true, completion: nil)
     }
     
-    func tableView(_ tableView: UITableView, willSelectRowAt indexPath: IndexPath) -> IndexPath? {
-        guard let section = Section(rawValue: indexPath.section) else {
-            return nil
-        }
-        
-        switch section {
-        case .savedItems:
-            return savedFolder?.playlistItems?.count == 0 ? nil : indexPath
-        case .folders:
-            let folder = othersFRC.fetchedObjects?[safe: indexPath.row]
-            return folder?.playlistItems?.count != 0 ? indexPath : nil
-        }
-    }
-    
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         guard let section = Section(rawValue: indexPath.section) else {
             return
@@ -233,17 +231,15 @@ extension PlaylistFolderController: UITableViewDelegate {
                 PlaylistFolder.removeFolder(folder)
             }
             
+            if PlaylistManager.shared.currentFolder?.isDeleted == true {
+                PlaylistManager.shared.currentFolder = nil
+            }
+            
             do {
                 try self.othersFRC.performFetch()
             } catch {
                 print("Error: \(error)")
             }
-            
-            if PlaylistManager.shared.currentFolder?.isDeleted == true {
-                PlaylistManager.shared.currentFolder = nil
-            }
-            
-            tableView.reloadData()
         }
         
         let deleteAction = UIContextualAction(style: .normal, title: nil, handler: { [weak self] (action, view, completionHandler) in

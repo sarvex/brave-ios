@@ -124,13 +124,10 @@ struct PlaylistNewFolderView: View {
     
     var body: some View {
         NavigationView {
-            Form {
+            List {
                 Section {
                     TextField("Untitled Folder", text: $folderName)
                         .disableAutocorrection(true)
-                        .frame(maxWidth: .infinity,
-                               minHeight: 44.0,
-                               maxHeight: 44.0)
                 }
                 .listRowBackground(Color(.secondaryBraveGroupedBackground))
                 
@@ -156,7 +153,8 @@ struct PlaylistNewFolderView: View {
                                         .overlay(
                                             RoundedRectangle(cornerRadius: PlaylistFolderImage.cornerRadius, style: .continuous)
                                                 .stroke(Color.blue, lineWidth: selected.contains(items[index].objectID) ? 2.0 : 0.0)
-                                        )
+                                            )
+                                        .clipShape(RoundedRectangle(cornerRadius: PlaylistFolderImage.cornerRadius, style: .continuous))
                                         .onTapGesture {
                                         if let index = selected.firstIndex(of: items[index].objectID) {
                                             selected.remove(at: index)
@@ -167,11 +165,11 @@ struct PlaylistNewFolderView: View {
                                 }
                             }
                         }
-                        .listRowInsets(.zero)
                         .listRowBackground(Color(.braveGroupedBackground))
                     }
                 }
             }
+            .listRowInsets(.zero)
             .listStyle(.insetGrouped)
             .navigationTitle("New Folder")
             .navigationBarTitleDisplayMode(.inline)
