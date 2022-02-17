@@ -145,6 +145,7 @@ extension PlaylistFolderController: UITableViewDataSource {
             cell.textLabel?.text = "Saved"
             cell.detailTextLabel?.text = "\(savedFolder?.playlistItems?.count ?? 0) Items"
             cell.accessoryType = .disclosureIndicator
+            cell.selectionStyle = .none
         case .folders:
             guard let folder = othersFRC.fetchedObjects?[safe: indexPath.row] else {
                 return
@@ -154,6 +155,7 @@ extension PlaylistFolderController: UITableViewDataSource {
             cell.textLabel?.text = folder.title
             cell.detailTextLabel?.text = "\(folder.playlistItems?.count ?? 0) Items"
             cell.accessoryType = .disclosureIndicator
+            cell.selectionStyle = .none
         }
     }
     
@@ -218,6 +220,10 @@ extension PlaylistFolderController: UITableViewDelegate {
             return nil
         }
         
+        if section == .savedItems {
+            return nil
+        }
+        
         func deleteFolder(folder: PlaylistFolder) {
             if PlaylistManager.shared.currentFolder?.objectID == folder.objectID {
                 PlaylistManager.shared.currentFolder = nil
@@ -240,6 +246,8 @@ extension PlaylistFolderController: UITableViewDelegate {
             } catch {
                 print("Error: \(error)")
             }
+            
+            tableView.reloadData()
         }
         
         let deleteAction = UIContextualAction(style: .normal, title: nil, handler: { [weak self] (action, view, completionHandler) in

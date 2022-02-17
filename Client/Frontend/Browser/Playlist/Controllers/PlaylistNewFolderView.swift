@@ -25,15 +25,12 @@ private struct PlaylistFolderImage: View {
     }
     
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            Image(uiImage: thumbnail)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .background(Color.black)
-                .clipShape(RoundedRectangle(cornerRadius: PlaylistFolderImage.cornerRadius, style: .continuous))
-                .overlay(tint.opacity(0.25))
-            
-            VStack(alignment: .leading) {
+        Image(uiImage: thumbnail)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .background(Color.black)
+            .overlay(tint.opacity(0.35))
+            .overlay(VStack(alignment: .leading) {
                 Image(uiImage: favIcon)
                     .resizable()
                     .aspectRatio(1.0, contentMode: .fit)
@@ -47,18 +44,14 @@ private struct PlaylistFolderImage: View {
                     .font(.callout.weight(.medium))
                     .lineLimit(2)
                     .foregroundColor(.white)
+            }.padding(8.0), alignment: .topLeading)
+            .clipShape(RoundedRectangle(cornerRadius: PlaylistFolderImage.cornerRadius, style: .continuous))
+            .onReceive(thumbnailLoader.$image) {
+                self.thumbnail = $0 ?? UIImage()
             }
-            .padding(8.0)
-        }
-        .frame(maxWidth: (UIScreen.main.bounds.width / 2.0) - 12.0,
-               minHeight: 100.0,
-               maxHeight: 100.0)
-        .onReceive(thumbnailLoader.$image) {
-            self.thumbnail = $0 ?? UIImage()
-        }
-        .onReceive(favIconLoader.$image) {
-            self.favIcon = $0 ?? UIImage()
-        }
+            .onReceive(favIconLoader.$image) {
+                self.favIcon = $0 ?? UIImage()
+            }
     }
     
     private var tint: some View {
@@ -148,20 +141,17 @@ struct PlaylistNewFolderView: View {
                             }
                             
                             LazyVGrid(columns: gridItems, alignment: .leading, spacing: 12.0) {
-                                ForEach((0..<items.count), id: \.self) { index in
-                                    PlaylistFolderImage(item: items[index])
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: PlaylistFolderImage.cornerRadius, style: .continuous)
-                                                .stroke(Color.blue, lineWidth: selected.contains(items[index].objectID) ? 2.0 : 0.0)
-                                            )
-                                        .clipShape(RoundedRectangle(cornerRadius: PlaylistFolderImage.cornerRadius, style: .continuous))
+                                ForEach(items) { item in
+                                    PlaylistFolderImage(item: item)
+                                        .overlay(RoundedRectangle(cornerRadius: PlaylistFolderImage.cornerRadius, style: .continuous).stroke(Color.blue, lineWidth: selected.contains(item.objectID) ? 2.0 : 0.0))
+                                        // Using a BUTTON will cause ALL items to be selected instead of just the one that was tapped on.
                                         .onTapGesture {
-                                        if let index = selected.firstIndex(of: items[index].objectID) {
-                                            selected.remove(at: index)
-                                        } else {
-                                            selected.append(items[index].objectID)
+                                            if let index = selected.firstIndex(of: item.objectID) {
+                                                selected.remove(at: index)
+                                            } else {
+                                                selected.append(item.objectID)
+                                            }
                                         }
-                                    }
                                 }
                             }
                         }

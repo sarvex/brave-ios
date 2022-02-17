@@ -10,7 +10,7 @@ import Shared
 private let log = Logger.browserLogger
 
 @objc(PlaylistItem)
-final public class PlaylistItem: NSManagedObject, CRUD {
+final public class PlaylistItem: NSManagedObject, CRUD, Identifiable {
     @NSManaged public var cachedData: Data?
     @NSManaged public var dateAdded: Date?
     @NSManaged public var duration: TimeInterval
@@ -21,6 +21,10 @@ final public class PlaylistItem: NSManagedObject, CRUD {
     @NSManaged public var pageSrc: String?
     @NSManaged public var pageTitle: String?
     @NSManaged public var playlistFolder: PlaylistFolder?
+    
+    public var id: String {
+        objectID.uriRepresentation().absoluteString
+    }
     
     public class func frc() -> NSFetchedResultsController<PlaylistItem> {
         let context = DataController.viewContext

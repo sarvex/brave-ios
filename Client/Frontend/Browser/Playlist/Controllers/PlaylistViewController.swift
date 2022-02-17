@@ -202,10 +202,12 @@ class PlaylistViewController: UIViewController {
         folderObserver = PlaylistManager.shared.onCurrentFolderDidChange
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in
-                guard let self = self else { return }
-                if self.listController.parent == nil {
-                    self.folderController.navigationController?.pushViewController(self.listController, animated: true)
-                }
+                guard let self = self,
+                      self.listController.parent == nil,
+                      PlaylistManager.shared.currentFolder != nil
+                else { return }
+                
+                self.folderController.navigationController?.pushViewController(self.listController, animated: true)
         }
     }
     
