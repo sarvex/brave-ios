@@ -184,7 +184,7 @@ public class TransactionConfirmationStore: ObservableObject {
   }
   
   func confirm(transaction: BraveWallet.TransactionInfo) {
-    txService.approveTransaction(.eth, txMetaId: transaction.id) { success in
+    txService.approveTransaction(.eth, txMetaId: transaction.id) { success, error, message  in
     }
   }
   
