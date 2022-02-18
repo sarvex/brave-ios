@@ -17,7 +17,8 @@ extension WalletStore {
       assetRatioService: MockAssetRatioService(),
       swapService: MockSwapService(),
       blockchainRegistry: MockBlockchainRegistry(),
-      txService: MockEthTxService()
+      txService: MockTxService(),
+      ethTxManagerProxy: MockEthTxManagerProxy()
     )
   }
 }
@@ -31,7 +32,8 @@ extension CryptoStore {
       assetRatioService: MockAssetRatioService(),
       swapService: MockSwapService(),
       blockchainRegistry: MockBlockchainRegistry(),
-      txService: MockEthTxService()
+      txService: MockTxService(),
+      ethTxManagerProxy: MockEthTxManagerProxy()
     )
   }
 }
@@ -77,8 +79,9 @@ extension SendTokenStore {
       keyringService: MockKeyringService(),
       rpcService: MockJsonRpcService(),
       walletService: MockBraveWalletService(),
-      txService: MockEthTxService(),
+      txService: MockTxService(),
       blockchainRegistry: MockBlockchainRegistry(),
+      ethTxManagerProxy: MockEthTxManagerProxy(),
       prefilledToken: .previewToken
     )
   }
@@ -90,7 +93,7 @@ extension AssetDetailStore {
       assetRatioService: MockAssetRatioService(),
       keyringService: MockKeyringService(),
       rpcService: MockJsonRpcService(),
-      txService: MockEthTxService(),
+      txService: MockTxService(),
       blockchainRegistry: MockBlockchainRegistry(),
       token: .previewToken
     )
@@ -105,7 +108,8 @@ extension SwapTokenStore {
       rpcService: MockJsonRpcService(),
       assetRatioService: MockAssetRatioService(),
       swapService: MockSwapService(),
-      txService: MockEthTxService(),
+      txService: MockTxService(),
+      ethTxManagerProxy: MockEthTxManagerProxy(),
       prefilledToken: nil
     )
   }
@@ -129,7 +133,7 @@ extension AccountActivityStore {
       walletService: MockBraveWalletService(),
       rpcService: MockJsonRpcService(),
       assetRatioService: MockAssetRatioService(),
-      txService: MockEthTxService()
+      txService: MockTxService()
     )
   }
 }
@@ -139,9 +143,10 @@ extension TransactionConfirmationStore {
     .init(
       assetRatioService: MockAssetRatioService(),
       rpcService: MockJsonRpcService(),
-      txService: MockEthTxService(),
+      txService: MockTxService(),
       blockchainRegistry: MockBlockchainRegistry(),
-      walletService: MockBraveWalletService()
+      walletService: MockBraveWalletService(),
+      ethTxManagerProxy: MockEthTxManagerProxy()
     )
   }
 }

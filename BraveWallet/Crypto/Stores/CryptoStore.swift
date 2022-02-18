@@ -34,7 +34,8 @@ public class CryptoStore: ObservableObject {
   private let assetRatioService: BraveWalletAssetRatioService
   private let swapService: BraveWalletSwapService
   let blockchainRegistry: BraveWalletBlockchainRegistry
-  private let txService: BraveWalletEthTxService
+  private let txService: BraveWalletTxService
+  private let ethTxManagerProxy: BraveWalletEthTxManagerProxy
   
   public init(
     keyringService: BraveWalletKeyringService,
@@ -43,7 +44,8 @@ public class CryptoStore: ObservableObject {
     assetRatioService: BraveWalletAssetRatioService,
     swapService: BraveWalletSwapService,
     blockchainRegistry: BraveWalletBlockchainRegistry,
-    txService: BraveWalletEthTxService
+    txService: BraveWalletTxService,
+    ethTxManagerProxy: BraveWalletEthTxManagerProxy
   ) {
     self.keyringService = keyringService
     self.rpcService = rpcService
@@ -52,6 +54,7 @@ public class CryptoStore: ObservableObject {
     self.swapService = swapService
     self.blockchainRegistry = blockchainRegistry
     self.txService = txService
+    self.ethTxManagerProxy = ethTxManagerProxy
     
     self.networkStore = .init(rpcService: rpcService)
     self.portfolioStore = .init(
@@ -91,6 +94,7 @@ public class CryptoStore: ObservableObject {
       walletService: walletService,
       txService: txService,
       blockchainRegistry: blockchainRegistry,
+      ethTxManagerProxy: ethTxManagerProxy,
       prefilledToken: prefilledToken
     )
     sendTokenStore = store
@@ -109,6 +113,7 @@ public class CryptoStore: ObservableObject {
       assetRatioService: assetRatioService,
       swapService: swapService,
       txService: txService,
+      ethTxManagerProxy: ethTxManagerProxy,
       prefilledToken: prefilledToken
     )
     swapTokenStore = store
@@ -170,7 +175,8 @@ public class CryptoStore: ObservableObject {
       rpcService: rpcService,
       txService: txService,
       blockchainRegistry: blockchainRegistry,
-      walletService: walletService
+      walletService: walletService,
+      ethTxManagerProxy: ethTxManagerProxy
     )
     confirmationStore = store
     return store
@@ -185,7 +191,7 @@ public class CryptoStore: ObservableObject {
       let group = DispatchGroup()
       for info in keyring.accountInfos {
         group.enter()
-        txService.allTransactionInfo(info.address) { tx in
+        txService.allTransactionInfo(.eth, from: info.address) { tx in
           defer { group.leave() }
           pendingTransactions.append(contentsOf: tx.filter { $0.txStatus == .unapproved })
         }
@@ -206,7 +212,7 @@ public class CryptoStore: ObservableObject {
   }
 }
 
-extension CryptoStore: BraveWalletEthTxServiceObserver {
+extension CryptoStore: BraveWalletTxServiceObserver {
   public func onNewUnapprovedTx(_ txInfo: BraveWallet.TransactionInfo) {
     fetchUnapprovedTransactions()
   }
