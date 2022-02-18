@@ -385,7 +385,7 @@ class PlaylistListViewController: UIViewController {
         }
         
         let hostingController = UIHostingController(rootView: moveController.environment(\.managedObjectContext, DataController.swiftUIContext)).then {
-            $0.modalPresentationStyle = .currentContext
+            $0.modalPresentationStyle = .formSheet
             $0.modalTransitionStyle = UIDevice.isIpad ? .crossDissolve : .coverVertical
         }
         
@@ -541,6 +541,7 @@ extension PlaylistListViewController {
         if PlaylistManager.shared.numberOfAssets > 0 {
             tableView.backgroundView = nil
             tableView.separatorStyle = .singleLine
+            toolbar.isHidden = false
         } else {
             let messageLabel = UILabel(frame: view.bounds).then {
                 $0.text = Strings.PlayList.noItemLabelTitle
@@ -559,6 +560,7 @@ extension PlaylistListViewController {
                 $0.addSubview(messageLabel)
             }
             tableView.separatorStyle = .none
+            toolbar.isHidden = true
         }
     }
     

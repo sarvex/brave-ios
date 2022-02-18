@@ -196,7 +196,7 @@ extension PlaylistFolderController: UITableViewDelegate {
         }
 
         let hostingController = UIHostingController(rootView: playlistFolder.environment(\.managedObjectContext, DataController.swiftUIContext)).then {
-//            $0.modalPresentationStyle = .currentContext
+            $0.modalPresentationStyle = .formSheet
             $0.modalTransitionStyle = UIDevice.isIpad ? .crossDissolve : .coverVertical
         }
         
