@@ -27,6 +27,7 @@ protocol PlaylistViewControllerDelegate: AnyObject {
     func onFullscreen()
     func onExitFullscreen()
     func playItem(item: PlaylistInfo, completion: ((PlaylistMediaStreamer.PlaybackError) -> Void)?)
+    func pausePlaying()
     func stopPlaying()
     func deleteItem(item: PlaylistInfo, at index: Int)
     func updateLastPlayedItem(item: PlaylistInfo)
@@ -492,6 +493,10 @@ extension PlaylistViewController: PlaylistViewControllerDelegate {
                 dismiss(animated: true, completion: nil)
             }
         }
+    }
+    
+    func pausePlaying() {
+        playerView.pause()
     }
     
     func stopPlaying() {

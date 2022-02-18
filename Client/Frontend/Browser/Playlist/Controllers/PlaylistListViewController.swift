@@ -355,6 +355,8 @@ class PlaylistListViewController: UIViewController {
     
     @objc
     private func onMoveEditingItems() {
+        delegate?.pausePlaying()
+        
         let selection = tableView.indexPathsForSelectedRows ?? []
         onCancelEditingItems()
         
