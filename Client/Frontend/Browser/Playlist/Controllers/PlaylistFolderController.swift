@@ -387,6 +387,10 @@ extension PlaylistFolderController: UITableViewDelegate {
         
         return UITargetedPreview(view: cell, parameters: parameters)
     }
+    
+    func tableView(_ tableView: UITableView, previewForDismissingContextMenuWithConfiguration configuration: UIContextMenuConfiguration) -> UITargetedPreview? {
+        self.tableView(tableView, previewForHighlightingContextMenuWithConfiguration: configuration)
+    }
 }
 
 extension PlaylistFolderController: NSFetchedResultsControllerDelegate {

@@ -328,39 +328,11 @@ class PlaylistListViewController: UIViewController {
         }
     }
     
-    @objc
-    private func onExit(_ button: UIBarButtonItem) {
-        dismiss(animated: true, completion: nil)
-    }
-    
-    @objc
-    private func onEditItems() {
-        if tableView.isEditing {
-            // If already editing, such as when swiping on a cell,
-            // dismiss the trailing swipe and show the selections instead.
-            tableView.setEditing(false, animated: false)
-            tableView.setEditing(true, animated: false)
-        } else {
-            tableView.setEditing(true, animated: true)
-        }
-        
-        updateToolbar(editing: true)
-    }
-    
-    @objc
-    private func onCancelEditingItems() {
-        tableView.setEditing(false, animated: true)
-        updateToolbar(editing: false)
-    }
-    
-    @objc
-    private func onMoveEditingItems() {
+    func moveItems(indexPaths: [IndexPath]) {
         delegate?.pausePlaying()
-        
-        let selection = tableView.indexPathsForSelectedRows ?? []
         onCancelEditingItems()
         
-        let selectedItems = selection.compactMap({
+        let selectedItems = indexPaths.compactMap({
             PlaylistManager.shared.fetchedObjects[safe: $0.row]
         })
         
@@ -392,6 +364,36 @@ class PlaylistListViewController: UIViewController {
         }
         
         present(hostingController, animated: true, completion: nil)
+    }
+    
+    @objc
+    private func onExit(_ button: UIBarButtonItem) {
+        dismiss(animated: true, completion: nil)
+    }
+    
+    @objc
+    private func onEditItems() {
+        if tableView.isEditing {
+            // If already editing, such as when swiping on a cell,
+            // dismiss the trailing swipe and show the selections instead.
+            tableView.setEditing(false, animated: false)
+            tableView.setEditing(true, animated: false)
+        } else {
+            tableView.setEditing(true, animated: true)
+        }
+        
+        updateToolbar(editing: true)
+    }
+    
+    @objc
+    private func onCancelEditingItems() {
+        tableView.setEditing(false, animated: true)
+        updateToolbar(editing: false)
+    }
+    
+    @objc
+    private func onMoveEditingItems() {
+        moveItems(indexPaths: tableView.indexPathsForSelectedRows ?? [])
     }
     
     @objc
