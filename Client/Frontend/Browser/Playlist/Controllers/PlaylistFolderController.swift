@@ -144,6 +144,7 @@ extension PlaylistFolderController: UITableViewDataSource {
             cell.imageView?.image = folderIcon
             cell.textLabel?.text = "Saved"
             cell.detailTextLabel?.text = "\(savedFolder?.playlistItems?.count ?? 0) Items"
+            cell.detailTextLabel?.textColor = .secondaryBraveLabel
             cell.accessoryType = .disclosureIndicator
             cell.selectionStyle = .none
         case .folders:
@@ -154,6 +155,7 @@ extension PlaylistFolderController: UITableViewDataSource {
             cell.imageView?.image = folderIcon
             cell.textLabel?.text = folder.title
             cell.detailTextLabel?.text = "\(folder.playlistItems?.count ?? 0) Items"
+            cell.detailTextLabel?.textColor = .secondaryBraveLabel
             cell.accessoryType = .disclosureIndicator
             cell.selectionStyle = .none
         }
@@ -194,7 +196,7 @@ extension PlaylistFolderController: UITableViewDelegate {
         }
 
         let hostingController = UIHostingController(rootView: playlistFolder.environment(\.managedObjectContext, DataController.swiftUIContext)).then {
-            $0.modalPresentationStyle = .currentContext
+//            $0.modalPresentationStyle = .currentContext
             $0.modalTransitionStyle = UIDevice.isIpad ? .crossDissolve : .coverVertical
         }
         
@@ -415,7 +417,7 @@ extension PlaylistFolderController: UITableViewDragDelegate, UITableViewDropDele
     }
     
     func tableView(_ tableView: UITableView, dragPreviewParametersForRowAt indexPath: IndexPath) -> UIDragPreviewParameters? {
-        guard let cell = tableView.cellForRow(at: indexPath) as? PlaylistFolderCell else { return nil }
+        guard let cell = tableView.cellForRow(at: indexPath) else { return nil }
         
         let preview = UIDragPreviewParameters()
         preview.visiblePath = UIBezierPath(roundedRect: cell.contentView.frame, cornerRadius: 12.0)
@@ -424,7 +426,7 @@ extension PlaylistFolderController: UITableViewDragDelegate, UITableViewDropDele
     }
 
     func tableView(_ tableView: UITableView, dropPreviewParametersForRowAt indexPath: IndexPath) -> UIDragPreviewParameters? {
-        guard let cell = tableView.cellForRow(at: indexPath) as? PlaylistFolderCell else { return nil }
+        guard let cell = tableView.cellForRow(at: indexPath) else { return nil }
         
         let preview = UIDragPreviewParameters()
         preview.visiblePath = UIBezierPath(roundedRect: cell.contentView.frame, cornerRadius: 12.0)

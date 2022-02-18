@@ -1096,7 +1096,7 @@
 		CAC2CB4D2644496400BB8D36 /* RecentSearchClipboardHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAC2CB4C2644496400BB8D36 /* RecentSearchClipboardHeaderView.swift */; };
 		CAC5342327A83DE000013056 /* PlaylistFolder.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAC5342227A83DE000013056 /* PlaylistFolder.swift */; };
 		CAC5342927A9B87600013056 /* PlaylistFolderController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAC5342827A9B87600013056 /* PlaylistFolderController.swift */; };
-		CAC5342B27A9B88000013056 /* PlaylistFolderCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAC5342A27A9B88000013056 /* PlaylistFolderCell.swift */; };
+		CAD0D5D927C007CC001071AC /* PlaylistEditFolderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAD0D5D827C007CC001071AC /* PlaylistEditFolderView.swift */; };
 		CE7F11941F3CEEC800ABFC0B /* RemoteDevices.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7F115E1F3CCEF900ABFC0B /* RemoteDevices.swift */; };
 		D018F93E1F44A71A0098F8CA /* Schema.swift in Sources */ = {isa = PBXBuildFile; fileRef = D018F93D1F44A7190098F8CA /* Schema.swift */; };
 		D029A04920A62DB0001DB72F /* TemporaryDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = D029A04820A62DB0001DB72F /* TemporaryDocument.swift */; };
@@ -3039,7 +3039,7 @@
 		CAC5341727A83A1B00013056 /* Model14.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Model14.xcdatamodel; sourceTree = "<group>"; };
 		CAC5342227A83DE000013056 /* PlaylistFolder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistFolder.swift; sourceTree = "<group>"; };
 		CAC5342827A9B87600013056 /* PlaylistFolderController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistFolderController.swift; sourceTree = "<group>"; };
-		CAC5342A27A9B88000013056 /* PlaylistFolderCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistFolderCell.swift; sourceTree = "<group>"; };
+		CAD0D5D827C007CC001071AC /* PlaylistEditFolderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistEditFolderView.swift; sourceTree = "<group>"; };
 		CE7F115E1F3CCEF900ABFC0B /* RemoteDevices.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoteDevices.swift; sourceTree = "<group>"; };
 		D000661320472890009BA6F6 /* __firefox__.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = __firefox__.js; sourceTree = "<group>"; };
 		D018F93D1F44A7190098F8CA /* Schema.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Schema.swift; sourceTree = "<group>"; };
@@ -5624,7 +5624,6 @@
 			isa = PBXGroup;
 			children = (
 				5EC2C07225BF988E005EA984 /* PlaylistCell.swift */,
-				CAC5342A27A9B88000013056 /* PlaylistFolderCell.swift */,
 			);
 			path = Cells;
 			sourceTree = "<group>";
@@ -5907,6 +5906,7 @@
 				CAC5342827A9B87600013056 /* PlaylistFolderController.swift */,
 				CA57F9D827AA4AAF000C8242 /* PlaylistNewFolderView.swift */,
 				CA939F5927BADC7E006A9BB2 /* PlaylistMoveFolderView.swift */,
+				CAD0D5D827C007CC001071AC /* PlaylistEditFolderView.swift */,
 			);
 			path = Controllers;
 			sourceTree = "<group>";
@@ -8637,7 +8637,6 @@
 				4422D57321BFFB7F00BF1855 /* stringpiece.cc in Sources */,
 				27DCB9EC263764EF0067EF4A /* TabTrayCell.swift in Sources */,
 				27187808216526090006036E /* AlertPopupView.swift in Sources */,
-				CAC5342B27A9B88000013056 /* PlaylistFolderCell.swift in Sources */,
 				4422D56421BFFB7F00BF1855 /* re2.cc in Sources */,
 				278C46AC23F499730083347F /* AdvancedShieldsView.swift in Sources */,
 				0AEF16C723CDE4B800158AD9 /* BottomSheetViewController.swift in Sources */,
@@ -8764,6 +8763,7 @@
 				CA8D5C2426D7D07E009BF13D /* PlaylistThumbnailUtility.swift in Sources */,
 				4422D42C21BFCF8900BF1855 /* HttpsEverywhere.cpp in Sources */,
 				4422D50021BFFB7600BF1855 /* db_iter.cc in Sources */,
+				CAD0D5D927C007CC001071AC /* PlaylistEditFolderView.swift in Sources */,
 				27B68E9425C8911D002D0826 /* BraveNewsAddSourceViewController.swift in Sources */,
 				D0625C98208E87F10081F3B2 /* DownloadQueue.swift in Sources */,
 				4422D54621BFFB7E00BF1855 /* rune.cc in Sources */,

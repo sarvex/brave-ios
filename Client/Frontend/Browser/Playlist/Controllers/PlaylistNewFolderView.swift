@@ -29,7 +29,7 @@ private struct PlaylistFolderImage: View {
             .resizable()
             .aspectRatio(contentMode: .fit)
             .background(Color.black)
-            .overlay(tint.opacity(0.35))
+            .overlay(tint)
             .overlay(VStack(alignment: .leading) {
                 Image(uiImage: favIcon)
                     .resizable()
@@ -41,7 +41,7 @@ private struct PlaylistFolderImage: View {
                 Spacer()
                 
                 Text(title ?? "")
-                    .font(.callout.weight(.medium))
+                    .font(.footnote.weight(.semibold))
                     .lineLimit(2)
                     .foregroundColor(.white)
             }.padding(8.0), alignment: .topLeading)
@@ -57,7 +57,9 @@ private struct PlaylistFolderImage: View {
     private var tint: some View {
         EmptyView()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.black)
+        .background(LinearGradient(colors: [.clear, .black],
+                                   startPoint: .top,
+                                   endPoint: .bottom))
         .clipShape(RoundedRectangle(cornerRadius: PlaylistFolderImage.cornerRadius, style: .continuous))
     }
     
@@ -121,16 +123,18 @@ struct PlaylistNewFolderView: View {
                 Section {
                     TextField("Untitled Folder", text: $folderName)
                         .disableAutocorrection(true)
+                        .padding()
                 }
                 .listRowBackground(Color(.secondaryBraveGroupedBackground))
+                .listRowInsets(.zero)
                 
                 if !items.isEmpty {
                     Section {
                         VStack(alignment: .leading) {
                             HStack {
-                                VStack(alignment: .leading, spacing: 5.0) {
+                                VStack(alignment: .leading) {
                                     Text("Add videos to this folder")
-                                        .font(.callout.weight(.medium))
+                                        .font(.headline)
                                         .foregroundColor(.white)
                                         .multilineTextAlignment(.leading)
                                     Text("Tap to select videos")
@@ -142,24 +146,25 @@ struct PlaylistNewFolderView: View {
                             
                             LazyVGrid(columns: gridItems, alignment: .leading, spacing: 12.0) {
                                 ForEach(items) { item in
-                                    PlaylistFolderImage(item: item)
-                                        .overlay(RoundedRectangle(cornerRadius: PlaylistFolderImage.cornerRadius, style: .continuous).stroke(Color.blue, lineWidth: selected.contains(item.objectID) ? 2.0 : 0.0))
-                                        // Using a BUTTON will cause ALL items to be selected instead of just the one that was tapped on.
-                                        .onTapGesture {
-                                            if let index = selected.firstIndex(of: item.objectID) {
-                                                selected.remove(at: index)
-                                            } else {
-                                                selected.append(item.objectID)
-                                            }
+                                    Button(action: {
+                                        if let index = selected.firstIndex(of: item.objectID) {
+                                            selected.remove(at: index)
+                                        } else {
+                                            selected.append(item.objectID)
                                         }
+                                    }, label: {
+                                        PlaylistFolderImage(item: item)
+                                    })
+                                    .buttonStyle(.plain)
+                                    .overlay(RoundedRectangle(cornerRadius: PlaylistFolderImage.cornerRadius, style: .continuous).stroke(Color.blue, lineWidth: selected.contains(item.objectID) ? 2.0 : 0.0))
                                 }
                             }
                         }
                         .listRowBackground(Color(.braveGroupedBackground))
+                        .listRowInsets(.zero)
                     }
                 }
             }
-            .listRowInsets(.zero)
             .listStyle(.insetGrouped)
             .navigationTitle("New Folder")
             .navigationBarTitleDisplayMode(.inline)
@@ -181,10 +186,11 @@ struct PlaylistNewFolderView: View {
     }
 }
 
-//swiftlint:disable:next swiftui_previews_guard
+#if DEBUG
 struct PlaylistNewFolderView_Previews: PreviewProvider {
     static var previews: some View {
         PlaylistNewFolderView()
             .environment(\.managedObjectContext, DataController.swiftUIContext)
     }
 }
+#endif

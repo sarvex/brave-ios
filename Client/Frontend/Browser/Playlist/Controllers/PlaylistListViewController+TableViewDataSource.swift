@@ -9,6 +9,7 @@ import AVKit
 import AVFoundation
 import Data
 import Shared
+import BraveUI
 
 private let log = Logger.browserLogger
 
@@ -87,6 +88,9 @@ extension PlaylistListViewController: UITableViewDataSource {
             $0.backgroundColor = .clear
             $0.thumbnailView.image = nil
             $0.thumbnailView.backgroundColor = .black
+            $0.selectedBackgroundView = UIView().then {
+                $0.backgroundColor = .tertiaryBraveBackground
+            }
         }
         
         let cacheState = PlaylistManager.shared.state(for: item.pageSrc)

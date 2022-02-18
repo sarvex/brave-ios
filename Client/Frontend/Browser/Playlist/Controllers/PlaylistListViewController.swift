@@ -300,15 +300,23 @@ class PlaylistListViewController: UIViewController {
     func updateToolbar(editing: Bool) {
         if editing {
             toolbar.do {
-                $0.items = [
-                    UIBarButtonItem(title: "Cancel", style: .done, target: self, action: #selector(onCancelEditingItems)),
-                    UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
-                    UIBarButtonItem(title: "Move", style: .done, target: self, action: #selector(onMoveEditingItems)).then {
-                        $0.isEnabled = !(tableView.indexPathsForSelectedRows?.isEmpty ?? true) && PlaylistFolder.getOtherFoldersCount() > 0
-                    },
-                    UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
-                    UIBarButtonItem(title: "Delete", style: .done, target: self, action: #selector(onDeleteEditingItems))
-                ]
+                if PlaylistFolder.getOtherFoldersCount() == 0 {
+                    $0.items = [
+                        UIBarButtonItem(title: "Cancel", style: .done, target: self, action: #selector(onCancelEditingItems)),
+                        UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
+                        UIBarButtonItem(title: "Delete", style: .done, target: self, action: #selector(onDeleteEditingItems))
+                    ]
+                } else {
+                    $0.items = [
+                        UIBarButtonItem(title: "Cancel", style: .done, target: self, action: #selector(onCancelEditingItems)),
+                        UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
+                        UIBarButtonItem(title: "Move", style: .done, target: self, action: #selector(onMoveEditingItems)).then {
+                            $0.isEnabled = !(tableView.indexPathsForSelectedRows?.isEmpty ?? true)
+                        },
+                        UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
+                        UIBarButtonItem(title: "Delete", style: .done, target: self, action: #selector(onDeleteEditingItems))
+                    ]
+                }
             }
         } else {
             toolbar.do {
@@ -541,9 +549,15 @@ extension PlaylistListViewController {
                 $0.textAlignment = .center
                 $0.font = .systemFont(ofSize: 18.0, weight: .medium)
                 $0.sizeToFit()
+                
+                let offset = abs(tableView.contentOffset.y)
+                $0.frame.center.x = tableView.bounds.center.x
+                $0.frame.origin.y = offset + ((tableView.bounds.height - offset) / 2.0)
             }
             
-            tableView.backgroundView = messageLabel
+            tableView.backgroundView = UIView().then {
+                $0.addSubview(messageLabel)
+            }
             tableView.separatorStyle = .none
         }
     }

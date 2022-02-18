@@ -140,8 +140,8 @@ struct PlaylistMoveFolderView: View {
     
     @State private var moveDisabled: Bool = true
     @State private var selectedFolder = PlaylistManager.shared.currentFolder
-    var selectedItems: [PlaylistItem]
     
+    var selectedItems: [PlaylistItem]
     var onCancelButtonPressed: (() -> Void)?
     var onDoneButtonPressed: (([PlaylistItem], PlaylistFolder?) -> Void)?
     
@@ -255,10 +255,11 @@ struct PlaylistMoveFolderView: View {
     }
 }
 
-//swiftlint:disable:next swiftui_previews_guard
+#if DEBUG
 struct PlaylistMoveFolderView_Previews: PreviewProvider {
     static var previews: some View {
         PlaylistMoveFolderView(selectedItems: [])
             .environment(\.managedObjectContext, DataController.swiftUIContext)
     }
 }
+#endif
