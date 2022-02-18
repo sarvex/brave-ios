@@ -167,8 +167,80 @@ extension PlaylistFolderController: UITableViewDataSource {
 }
 
 extension PlaylistFolderController: UITableViewDelegate {
+    
+    private func deleteFolder(folder: PlaylistFolder) {
+        if PlaylistManager.shared.currentFolder?.objectID == folder.objectID {
+            PlaylistManager.shared.currentFolder = nil
+        }
+        
+        folder.playlistItems?.forEach({
+            PlaylistManager.shared.delete(item: PlaylistInfo(item: $0))
+        })
+        
+        if folder.uuid != PlaylistFolder.savedFolderUUID {
+            PlaylistFolder.removeFolder(folder)
+        }
+        
+        if PlaylistManager.shared.currentFolder?.isDeleted == true {
+            PlaylistManager.shared.currentFolder = nil
+        }
+        
+        do {
+            try self.othersFRC.performFetch()
+        } catch {
+            print("Error: \(error)")
+        }
+        
+        tableView.reloadData()
+    }
+    
+    private func onEditFolder(folderUUID: String) {
+        guard let folder = self.othersFRC.fetchedObjects?.first(where: { $0.uuid == folderUUID }) else {
+            return
+        }
+        
+        var editView = PlaylistEditFolderView(currentFolder: folder.objectID, currentFolderTitle: folder.title ?? "")
+        
+        editView.onCancelButtonPressed = { [weak self] in
+            self?.presentedViewController?.dismiss(animated: true, completion: nil)
+        }
+        
+        editView.onEditFolder = { [weak self] folderTitle, currentFolder in
+            guard let self = self else { return }
+            
+            DataController.performOnMainContext { context in
+                do {
+                    let folder = try context.existingObject(with: currentFolder) as? PlaylistFolder
+                    folder?.title = folderTitle
+                    
+                    DispatchQueue.main.async {
+                        self.presentedViewController?.dismiss(animated: true, completion: nil)
+                    }
+                } catch {
+                    log.error("Error Saving Folder Title: \(error)")
+                    
+                    DispatchQueue.main.async {
+                        let alert = UIAlertController(title: "Error Saving Changes", message: "Sorry we were unable to save the changes you made to this folder", preferredStyle: .alert)
+                        
+                        alert.addAction(UIAlertAction(title: "Okay", style: .default, handler: { _ in
+                            self.presentedViewController?.dismiss(animated: true, completion: nil)
+                        }))
+                        self.present(alert, animated: true, completion: nil)
+                    }
+                }
+            }
+        }
+        
+        let hostingController = UIHostingController(rootView: editView.environment(\.managedObjectContext, DataController.swiftUIContext)).then {
+            $0.modalPresentationStyle = .formSheet
+            $0.modalTransitionStyle = UIDevice.isIpad ? .crossDissolve : .coverVertical
+        }
+        
+        present(hostingController, animated: true, completion: nil)
+    }
+    
     @objc
-    func onNewFolder(_ button: UIBarButtonItem) {
+    private func onNewFolder(_ button: UIBarButtonItem) {
         var playlistFolder = PlaylistNewFolderView()
         playlistFolder.onCancelButtonPressed = { [weak self] in
             self?.presentedViewController?.dismiss(animated: true, completion: nil)
@@ -226,32 +298,6 @@ extension PlaylistFolderController: UITableViewDelegate {
             return nil
         }
         
-        func deleteFolder(folder: PlaylistFolder) {
-            if PlaylistManager.shared.currentFolder?.objectID == folder.objectID {
-                PlaylistManager.shared.currentFolder = nil
-            }
-            
-            folder.playlistItems?.forEach({
-                PlaylistManager.shared.delete(item: PlaylistInfo(item: $0))
-            })
-            
-            if folder.uuid != PlaylistFolder.savedFolderUUID {
-                PlaylistFolder.removeFolder(folder)
-            }
-            
-            if PlaylistManager.shared.currentFolder?.isDeleted == true {
-                PlaylistManager.shared.currentFolder = nil
-            }
-            
-            do {
-                try self.othersFRC.performFetch()
-            } catch {
-                print("Error: \(error)")
-            }
-            
-            tableView.reloadData()
-        }
-        
         let deleteAction = UIContextualAction(style: .normal, title: nil, handler: { [weak self] (action, view, completionHandler) in
             guard let self = self else { return }
             
@@ -261,14 +307,14 @@ extension PlaylistFolderController: UITableViewDelegate {
                     completionHandler(false)
                     return
                 }
-                deleteFolder(folder: folder)
+                self.deleteFolder(folder: folder)
                 
             case .folders:
                 guard let folder = self.othersFRC.fetchedObjects?[safe: indexPath.row] else {
                     completionHandler(false)
                     return
                 }
-                deleteFolder(folder: folder)
+                self.deleteFolder(folder: folder)
             }
             
             completionHandler(true)
@@ -278,6 +324,68 @@ extension PlaylistFolderController: UITableViewDelegate {
         deleteAction.backgroundColor = UIColor.braveErrorLabel
         
         return UISwipeActionsConfiguration(actions: [deleteAction])
+    }
+    
+    func tableView(_ tableView: UITableView, contextMenuConfigurationForRowAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
+        
+        guard let section = Section(rawValue: indexPath.section),
+              section == .folders else {
+            return nil
+        }
+        
+        guard let folder = othersFRC.fetchedObjects?[safe: indexPath.row],
+              let folderUUID = folder.uuid else {
+            return nil
+        }
+        
+        let actionProvider: UIContextMenuActionProvider = { [weak self] _ in
+            return UIMenu(children: [
+                UIAction(title: "Edit Folder", image: UIImage(systemName: "pencil"), handler: { _ in
+                    guard let self = self else {
+                        return
+                    }
+                    
+                    self.onEditFolder(folderUUID: folderUUID)
+                }),
+                
+                UIAction(title: "Delete", image: UIImage(systemName: "trash"), attributes: .destructive, handler: { _ in
+                    guard let self = self else { return }
+                    self.othersFRC.fetchedObjects?.first(where: { $0.uuid == folderUUID })?.do {
+                        self.deleteFolder(folder: $0)
+                    }
+                })
+            ])
+        }
+
+        let identifier = NSDictionary(dictionary: ["folderUUID": folderUUID,
+                                                   "row": indexPath.row])
+        return UIContextMenuConfiguration(identifier: identifier, previewProvider: nil, actionProvider: actionProvider)
+    }
+    
+    func tableView(_ tableView: UITableView, previewForHighlightingContextMenuWithConfiguration configuration: UIContextMenuConfiguration) -> UITargetedPreview? {
+        guard let identifier = configuration.identifier as? NSDictionary else {
+            return nil
+        }
+        
+        guard let folderUUID = identifier["folderUUID"] as? String,
+              let row = identifier["row"] as? Int,
+              row < othersFRC.fetchedObjects?.count ?? -1 else {
+            return nil
+        }
+        
+        guard let folder = othersFRC.fetchedObjects?[safe: row],
+              folderUUID == folder.uuid,
+              let cell = tableView.cellForRow(at: IndexPath(row: row, section: Section.folders.rawValue)) else {
+            return nil
+        }
+
+        let parameters = UIPreviewParameters()
+        parameters.visiblePath = UIBezierPath(roundedRect: cell.contentView.frame.with {
+            $0.size.width = cell.bounds.width
+        }, cornerRadius: 12.0)
+        parameters.backgroundColor = .tertiaryBraveBackground
+        
+        return UITargetedPreview(view: cell, parameters: parameters)
     }
 }
 

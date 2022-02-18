@@ -41,7 +41,7 @@ struct PlaylistEditFolderView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") { onEditFolder?(folderName, currentFolder) }
                     .foregroundColor(.white)
-                    .disabled(currentFolderTitle == folderName)
+                    .disabled(folderName.isEmpty || currentFolderTitle == folderName)
                 }
             }
         }
