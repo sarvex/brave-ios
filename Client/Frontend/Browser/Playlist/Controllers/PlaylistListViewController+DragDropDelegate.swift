@@ -5,6 +5,7 @@
 
 import Foundation
 import UIKit
+import BraveUI
 
 // MARK: - Reordering of cells
 
@@ -56,7 +57,7 @@ extension PlaylistListViewController: UITableViewDragDelegate, UITableViewDropDe
         
         let preview = UIDragPreviewParameters()
         preview.visiblePath = UIBezierPath(roundedRect: cell.contentView.frame, cornerRadius: 12.0)
-        preview.backgroundColor = UIColor.braveBackground.slightlyLighterColor
+        preview.backgroundColor = .tertiaryBraveBackground
         return preview
     }
 
@@ -65,7 +66,7 @@ extension PlaylistListViewController: UITableViewDragDelegate, UITableViewDropDe
         
         let preview = UIDragPreviewParameters()
         preview.visiblePath = UIBezierPath(roundedRect: cell.contentView.frame, cornerRadius: 12.0)
-        preview.backgroundColor = UIColor.braveBackground.slightlyLighterColor
+        preview.backgroundColor = .tertiaryBraveBackground
         return preview
     }
     

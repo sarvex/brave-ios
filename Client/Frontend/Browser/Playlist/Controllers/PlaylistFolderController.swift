@@ -420,8 +420,10 @@ extension PlaylistFolderController: UITableViewDragDelegate, UITableViewDropDele
         guard let cell = tableView.cellForRow(at: indexPath) else { return nil }
         
         let preview = UIDragPreviewParameters()
-        preview.visiblePath = UIBezierPath(roundedRect: cell.contentView.frame, cornerRadius: 12.0)
-        preview.backgroundColor = UIColor.braveBackground.slightlyLighterColor
+        preview.visiblePath = UIBezierPath(roundedRect: cell.contentView.frame.with {
+            $0.size.width = cell.bounds.width
+        }, cornerRadius: 12.0)
+        preview.backgroundColor = .tertiaryBraveBackground
         return preview
     }
 
@@ -429,8 +431,10 @@ extension PlaylistFolderController: UITableViewDragDelegate, UITableViewDropDele
         guard let cell = tableView.cellForRow(at: indexPath) else { return nil }
         
         let preview = UIDragPreviewParameters()
-        preview.visiblePath = UIBezierPath(roundedRect: cell.contentView.frame, cornerRadius: 12.0)
-        preview.backgroundColor = UIColor.braveBackground.slightlyLighterColor
+        preview.visiblePath = UIBezierPath(roundedRect: cell.contentView.frame.with {
+            $0.size.width = cell.bounds.width
+        }, cornerRadius: 12.0)
+        preview.backgroundColor = .tertiaryBraveBackground
         return preview
     }
     

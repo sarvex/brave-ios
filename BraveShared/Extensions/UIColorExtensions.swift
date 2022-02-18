@@ -27,7 +27,10 @@ extension UIColor {
     }
     
     public var slightlyLighterColor: UIColor {
-        let desaturation: CGFloat = 0.5
+        lighter(desaturation: 0.5)
+    }
+    
+    public func lighter(desaturation: CGFloat) -> UIColor {
         var h: CGFloat = 0, s: CGFloat = 0
         var b: CGFloat = 0, a: CGFloat = 0
 
