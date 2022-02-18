@@ -410,7 +410,7 @@ extension BraveCoreMigrator {
         
         let loginForm = PasswordForm(
             url: formSubmitURL,
-            signOnRealm: nil,
+            signOnRealm: "",
             dateCreated: login.timeCreated.toDate(),
             dateLastUsed: login.timeLastUsed.toDate(),
             datePasswordChanged: login.timePasswordChanged.toDate(),
