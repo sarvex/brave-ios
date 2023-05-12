@@ -32,15 +32,9 @@ def _Delta(a, b):
   """Compute the delta for b - a.  Even/odd and odd/even
      are handled specially, as described above."""
   if a+1 == b:
-    if a%2 == 0:
-      return 'EvenOdd'
-    else:
-      return 'OddEven'
+    return 'EvenOdd' if a%2 == 0 else 'OddEven'
   if a == b+1:
-    if a%2 == 0:
-      return 'OddEven'
-    else:
-      return 'EvenOdd'
+    return 'OddEven' if a%2 == 0 else 'EvenOdd'
   return b - a
 
 def _AddDelta(a, delta):
@@ -82,7 +76,7 @@ def _MakeRanges(pairs):
     if delta.endswith('Skip'):
       d = delta[:-4]
     else:
-      delta = d + 'Skip'
+      delta = f'{d}Skip'
     if b != _AddDelta(a, d):
       return False
     r[1] = a

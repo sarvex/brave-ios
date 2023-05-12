@@ -41,7 +41,7 @@ def _UInt(s):
   except ValueError:
     v = -1
   if len(s) < 4 or len(s) > 6 or v < 0 or v > _RUNE_MAX:
-    raise InputError("invalid Unicode value %s" % (s,))
+    raise InputError(f"invalid Unicode value {s}")
   return v
 
 
@@ -68,7 +68,7 @@ def _URange(s):
     hi = _UInt(a[1])
     if lo < hi:
       return range(lo, hi + 1)
-  raise InputError("invalid Unicode range %s" % (s,))
+  raise InputError(f"invalid Unicode range {s}")
 
 
 def _UStr(v):
@@ -86,7 +86,7 @@ def _UStr(v):
     InputError: the argument is not a valid Unicode value.
   """
   if v < 0 or v > _RUNE_MAX:
-    raise InputError("invalid Unicode value %s" % (v,))
+    raise InputError(f"invalid Unicode value {v}")
   return "0x%04X" % (v,)
 
 
@@ -112,9 +112,7 @@ def _ParseContinue(s):
   """
 
   match = re.match("<(.*), (First|Last)>", s)
-  if match is not None:
-    return match.groups()
-  return (s, None)
+  return match.groups() if match is not None else (s, None)
 
 
 def ReadUnicodeTable(filename, nfields, doline):
@@ -241,7 +239,7 @@ def CaseGroups(unicode_dir=_UNICODE_DIR):
     lower = _UInt(lower)
     togroup.setdefault(lower, [lower]).extend(codes)
 
-  ReadUnicodeTable(unicode_dir+"/CaseFolding.txt", 4, DoLine)
+  ReadUnicodeTable(f"{unicode_dir}/CaseFolding.txt", 4, DoLine)
 
   groups = togroup.values()
   for g in groups:
@@ -267,7 +265,7 @@ def Scripts(unicode_dir=_UNICODE_DIR):
     (_, name) = fields
     scripts.setdefault(name, []).extend(codes)
 
-  ReadUnicodeTable(unicode_dir+"/Scripts.txt", 2, DoLine)
+  ReadUnicodeTable(f"{unicode_dir}/Scripts.txt", 2, DoLine)
   return scripts
 
 
@@ -292,6 +290,6 @@ def Categories(unicode_dir=_UNICODE_DIR):
       short = category[0]
       categories.setdefault(short, []).extend(codes)
 
-  ReadUnicodeTable(unicode_dir+"/UnicodeData.txt", 15, DoLine)
+  ReadUnicodeTable(f"{unicode_dir}/UnicodeData.txt", 15, DoLine)
   return categories
 

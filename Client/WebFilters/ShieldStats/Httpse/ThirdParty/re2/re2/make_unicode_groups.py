@@ -79,12 +79,12 @@ def PrintGroup(name, codes):
   # else:
   #   ugroup += ", 0, 0"
   if len(range16) > 0:
-    PrintRanges("URange16", name+"_range16", range16)
+    PrintRanges("URange16", f"{name}_range16", range16)
     ugroup += ", %s_range16, %d" % (name, len(range16))
   else:
     ugroup += ", 0, 0"
   if len(range32) > 0:
-    PrintRanges("URange32", name+"_range32", range32)
+    PrintRanges("URange32", f"{name}_range32", range32)
     ugroup += ", %s_range32, %d" % (name, len(range32))
   else:
     ugroup += ", 0, 0"
